@@ -28,6 +28,9 @@ import {
   Move,
   Volume2,
   VolumeX,
+  Compass,
+  Layers,
+  ChevronRight,
 } from 'lucide-react';
 
 export interface ProductOverlayStudioRef {
@@ -40,6 +43,13 @@ interface ProductOverlayStudioProps {
   onBackToMedia: () => void;
   onRenderingChange?: (isRendering: boolean, progress: number) => void;
 }
+
+const PRESET_ORDER: OverlayPositionPreset[] = [
+  'bottom-right',
+  'bottom-left',
+  'top-right',
+  'center',
+];
 
 export const ProductOverlayStudio = forwardRef<
   ProductOverlayStudioRef,
@@ -55,7 +65,7 @@ export const ProductOverlayStudio = forwardRef<
     productId: ALLMAX_PRODUCTS[0].id,
     x: 76,
     y: 75,
-    scale: 0.38,
+    scale: 0.40,
     rotation: 0,
     opacity: 1.0,
     hasDropShadow: true,
@@ -84,7 +94,6 @@ export const ProductOverlayStudio = forwardRef<
   const [renderProgress, setRenderProgress] = useState<number>(0);
   const [renderMessage, setRenderMessage] = useState<string>('Preparing video render...');
 
-  // Update parent when rendering state changes
   useEffect(() => {
     onRenderingChange?.(isRendering, renderProgress);
   }, [isRendering, renderProgress, onRenderingChange]);
@@ -118,11 +127,26 @@ export const ProductOverlayStudio = forwardRef<
     }));
   };
 
-  const setStickerScale = (scale: number) => {
-    setConfig((prev) => ({
-      ...prev,
-      scale,
-    }));
+  // Cycle to next corner preset on 1-tap
+  const cycleNextPreset = () => {
+    const currentIndex = PRESET_ORDER.indexOf(config.preset);
+    const nextPreset = PRESET_ORDER[(currentIndex + 1) % PRESET_ORDER.length];
+    applyPreset(nextPreset);
+  };
+
+  // Cycle sticker size on 1-tap: Small (0.32) -> Med (0.42) -> Large (0.52)
+  const cycleStickerSize = () => {
+    setConfig((prev) => {
+      if (prev.scale <= 0.35) return { ...prev, scale: 0.42 };
+      if (prev.scale <= 0.45) return { ...prev, scale: 0.52 };
+      return { ...prev, scale: 0.32 };
+    });
+  };
+
+  const getSizeLabel = () => {
+    if (config.scale <= 0.35) return 'S';
+    if (config.scale <= 0.45) return 'M';
+    return 'L';
   };
 
   const handleSelectProduct = (product: AllmaxProduct) => {
@@ -130,7 +154,7 @@ export const ProductOverlayStudio = forwardRef<
     setConfig((prev) => ({
       ...prev,
       productId: product.id,
-      scale: product.defaultScale,
+      scale: product.defaultScale || 0.40,
     }));
   };
 
@@ -288,18 +312,17 @@ export const ProductOverlayStudio = forwardRef<
     }
   };
 
-  // Expose imperative handle so Navbar Next button can trigger render
   useImperativeHandle(ref, () => ({
     generateMockup: handleGenerateMockup,
   }));
 
   return (
-    <div className="w-full max-w-lg mx-auto space-y-3 py-1 px-1">
-      {/* Instagram Story / Reel Editor Canvas */}
-      <div className="relative mx-auto bg-black rounded-2xl overflow-hidden shadow-xl border border-slate-200">
+    <div className="h-full flex flex-col justify-between overflow-hidden select-none">
+      {/* 1. Large Immersive Video Viewport (Takes up majority of screen) */}
+      <div className="flex-1 min-h-0 relative flex items-center justify-center p-1 sm:p-2">
         <div
           ref={containerRef}
-          className="relative aspect-[9/16] h-[280px] sm:h-[350px] mx-auto select-none overflow-hidden"
+          className="relative h-full aspect-[9/16] max-h-[58vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200 select-none cursor-grab active:cursor-grabbing"
           style={{ touchAction: 'none' }}
         >
           {media.type === 'video' ? (
@@ -322,7 +345,7 @@ export const ProductOverlayStudio = forwardRef<
             />
           )}
 
-          {/* Draggable & Touch-Move Allmax Sticker */}
+          {/* Draggable Allmax Product Sticker */}
           <div
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
@@ -332,18 +355,18 @@ export const ProductOverlayStudio = forwardRef<
               top: `${config.y}%`,
               transform: `translate(-50%, -50%) rotate(${config.rotation}deg)`,
               width: `${config.scale * 100}%`,
-              zIndex: 25,
+              zIndex: 30,
               touchAction: 'none',
             }}
             className="cursor-grab active:cursor-grabbing select-none transition-transform"
           >
-            <div className="relative flex flex-col items-center justify-center filter drop-shadow-[0_14px_20px_rgba(0,0,0,0.75)]">
-              {/* Instagram-style active sticker dashed border while dragging */}
+            <div className="relative flex flex-col items-center justify-center filter drop-shadow-[0_16px_24px_rgba(0,0,0,0.85)]">
+              {/* Instagram Active Dragging Bounding Outline */}
               {isDragging && (
-                <div className="absolute -inset-2 border-2 border-dashed border-white rounded-xl pointer-events-none animate-pulse" />
+                <div className="absolute -inset-2 border-2 border-dashed border-white rounded-2xl pointer-events-none animate-pulse" />
               )}
 
-              {/* Tub Graphic */}
+              {/* Tub SVG Graphic */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedProduct.svgGraphic}
@@ -352,74 +375,110 @@ export const ProductOverlayStudio = forwardRef<
                 draggable={false}
               />
 
-              {/* Athlete Sponsor Badge */}
+              {/* Sponsor Badge */}
               {config.showBadge && (
-                <div className="mt-1 px-2.5 py-0.5 rounded-full bg-slate-900/95 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-lg border border-amber-400 whitespace-nowrap">
+                <div className="mt-1 px-2.5 py-0.5 rounded-full bg-slate-950/95 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-lg border border-amber-400 whitespace-nowrap">
                   {config.badgeText || '⚡ ALLMAX ATHLETE'}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Quick Floating Controls on Video */}
-          <div className="absolute top-2 left-2 z-30 flex items-center space-x-1.5">
+          {/* Floating Action Toolbar on Right (TikTok/Reels Style - 0 Extra Space Used) */}
+          <div className="absolute top-3 right-2.5 z-35 flex flex-col items-center space-y-2 pointer-events-auto">
+            {/* Snap Position Pill (1-Tap Cycle) */}
+            <button
+              onClick={cycleNextPreset}
+              className="w-9 h-9 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex flex-col items-center justify-center active:scale-90 transition-transform shadow-lg"
+              title="Snap Position"
+            >
+              <Compass className="w-4 h-4 text-orange-400" />
+            </button>
+
+            {/* Size Pill: S / M / L */}
+            <button
+              onClick={cycleStickerSize}
+              className="w-9 h-9 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex flex-col items-center justify-center active:scale-90 transition-transform shadow-lg font-black text-[11px]"
+              title="Toggle Size (S, M, L)"
+            >
+              <span className="text-amber-400">{getSizeLabel()}</span>
+            </button>
+
+            {/* Sponsor Badge Toggle Pill */}
+            <button
+              onClick={() => setConfig((p) => ({ ...p, showBadge: !p.showBadge }))}
+              className={`w-9 h-9 rounded-full backdrop-blur-md border flex items-center justify-center active:scale-90 transition-transform shadow-lg ${
+                config.showBadge
+                  ? 'bg-amber-500/90 text-white border-amber-300'
+                  : 'bg-black/65 text-slate-400 border-white/20'
+              }`}
+              title="Toggle Athlete Badge"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
+
+            {/* Sound Toggle */}
+            {media.type === 'video' && (
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                className="w-9 h-9 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-90 transition-transform shadow-lg"
+                title={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+              </button>
+            )}
+          </div>
+
+          {/* Floating Left Top: Play / Pause */}
+          <div className="absolute top-3 left-2.5 z-35 flex items-center space-x-1.5 pointer-events-auto">
             {media.type === 'video' && (
               <button
                 onClick={togglePlay}
-                className="p-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
-                title={isPlaying ? 'Pause' : 'Play'}
+                className="p-2 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 active:scale-90 transition-transform shadow-lg"
               >
                 {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
               </button>
             )}
-
-            {media.type === 'video' && (
-              <button
-                onClick={() => setIsMuted(!isMuted)}
-                className="p-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
-                title={isMuted ? 'Unmute' : 'Mute'}
-              >
-                {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-              </button>
-            )}
           </div>
 
-          <div className="absolute top-2 right-2 z-30 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded-full text-[10px] text-white font-bold flex items-center space-x-1">
-            <Move className="w-3 h-3 text-orange-400" />
-            <span>Drag anywhere</span>
+          {/* Drag Indicator Tooltip on Bottom of Video */}
+          <div className="absolute bottom-2.5 left-0 right-0 z-30 flex justify-center pointer-events-none">
+            <div className="bg-black/65 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-extrabold flex items-center space-x-1.5 border border-white/20 shadow-md">
+              <Move className="w-3 h-3 text-orange-400" />
+              <span>Drag supplement anywhere</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Instagram Story Sticker Drawer: Supplement Picker */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#FF4800]" />
-            <span className="text-xs font-black uppercase tracking-wider text-slate-800">
-              Allmax Stickers
-            </span>
+      {/* 2. Docked Bottom Drawer (Fixed, No Scrolling Needed on Mobile) */}
+      <div className="bg-white border-t border-slate-200 p-2.5 sm:p-3 shadow-2xl safe-bottom space-y-2">
+        {/* Product Drawer Header */}
+        <div className="flex items-center justify-between text-xs font-bold px-1">
+          <div className="flex items-center space-x-1 text-slate-800">
+            <Layers className="w-3.5 h-3.5 text-[#FF4800]" />
+            <span>Select Supplement:</span>
           </div>
-          <span className="text-[11px] font-black text-[#FF4800] truncate max-w-[180px]">
+          <span className="text-[#FF4800] font-black text-[11px] truncate max-w-[170px]">
             {selectedProduct.name}
           </span>
         </div>
 
-        {/* Horizontal Sticker Reel */}
-        <div className="flex space-x-2 overflow-x-auto pb-1 scrollbar-none snap-x">
+        {/* Large Horizontal Product Cards Carousel */}
+        <div className="flex space-x-2 overflow-x-auto pb-0.5 scrollbar-none snap-x">
           {ALLMAX_PRODUCTS.map((prod) => {
             const isSelected = selectedProduct.id === prod.id;
             return (
               <button
                 key={prod.id}
                 onClick={() => handleSelectProduct(prod)}
-                className={`w-[100px] p-2 rounded-xl border text-center flex flex-col items-center justify-center shrink-0 snap-start transition-all active:scale-95 ${
+                className={`w-[85px] sm:w-[95px] p-2 rounded-2xl border flex flex-col items-center justify-center shrink-0 snap-start transition-all active:scale-95 ${
                   isSelected
-                    ? 'border-[#FF4800] bg-orange-50/80 ring-2 ring-[#FF4800]/30 shadow-sm'
-                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                    ? 'border-[#FF4800] bg-orange-50/90 ring-2 ring-[#FF4800]/30 shadow-md'
+                    : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
                 }`}
               >
-                <div className="w-8 h-10 flex items-center justify-center mb-1">
+                <div className="w-9 h-11 flex items-center justify-center mb-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={prod.svgGraphic}
@@ -427,119 +486,22 @@ export const ProductOverlayStudio = forwardRef<
                     className="max-h-full max-w-full object-contain pointer-events-none"
                   />
                 </div>
-                <span className="text-[10px] font-black text-slate-900 truncate w-full block">
+                <span className="text-[10px] font-black text-slate-900 truncate w-full text-center block">
                   {prod.name}
                 </span>
-                <span className="text-[8px] text-slate-500 truncate w-full block uppercase font-bold">
+                <span className="text-[8px] text-slate-500 truncate w-full text-center block font-bold uppercase">
                   {prod.heroBadge}
                 </span>
               </button>
             );
           })}
         </div>
-      </div>
 
-      {/* Instagram Quick Controls: Snap Corners & Size */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2.5">
-        {/* Row 1: Corner Snaps */}
-        <div>
-          <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1.5">
-            <span>Sticker Position:</span>
-            <span className="text-[10px] text-slate-400 font-semibold capitalize">
-              {config.preset.replace('-', ' ')}
-            </span>
-          </div>
-          <div className="grid grid-cols-4 gap-1.5 text-xs font-bold">
-            <button
-              onClick={() => applyPreset('bottom-right')}
-              className={`py-1.5 px-1 rounded-xl border text-center transition-all text-[11px] active:scale-95 ${
-                config.preset === 'bottom-right'
-                  ? 'border-[#FF4800] bg-[#FF4800] text-white shadow-sm'
-                  : 'border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100'
-              }`}
-            >
-              ↘ Bottom-R
-            </button>
-            <button
-              onClick={() => applyPreset('bottom-left')}
-              className={`py-1.5 px-1 rounded-xl border text-center transition-all text-[11px] active:scale-95 ${
-                config.preset === 'bottom-left'
-                  ? 'border-[#FF4800] bg-[#FF4800] text-white shadow-sm'
-                  : 'border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100'
-              }`}
-            >
-              ↙ Bottom-L
-            </button>
-            <button
-              onClick={() => applyPreset('top-right')}
-              className={`py-1.5 px-1 rounded-xl border text-center transition-all text-[11px] active:scale-95 ${
-                config.preset === 'top-right'
-                  ? 'border-[#FF4800] bg-[#FF4800] text-white shadow-sm'
-                  : 'border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100'
-              }`}
-            >
-              ↗ Top-R
-            </button>
-            <button
-              onClick={() => applyPreset('center')}
-              className={`py-1.5 px-1 rounded-xl border text-center transition-all text-[11px] active:scale-95 ${
-                config.preset === 'center'
-                  ? 'border-[#FF4800] bg-[#FF4800] text-white shadow-sm'
-                  : 'border-slate-200 text-slate-700 bg-slate-50 hover:bg-slate-100'
-              }`}
-            >
-              • Center
-            </button>
-          </div>
-        </div>
-
-        {/* Row 2: Size & Badge Toggle */}
-        <div className="flex items-center justify-between pt-1 border-t border-slate-100 gap-2">
-          {/* Size Pills */}
-          <div className="flex items-center space-x-1">
-            <span className="text-[11px] font-bold text-slate-600 mr-1">Size:</span>
-            {[
-              { label: 'S', val: 0.3 },
-              { label: 'M', val: 0.38 },
-              { label: 'L', val: 0.48 },
-            ].map((size) => (
-              <button
-                key={size.label}
-                onClick={() => setStickerScale(size.val)}
-                className={`w-7 h-7 rounded-lg text-[10px] font-black transition-all ${
-                  Math.abs(config.scale - size.val) < 0.05
-                    ? 'bg-slate-900 text-white shadow'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                {size.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Athlete Badge Toggle */}
-          <button
-            onClick={() => setConfig((prev) => ({ ...prev, showBadge: !prev.showBadge }))}
-            className={`flex items-center space-x-1 px-2.5 py-1.5 rounded-lg border text-[10px] font-extrabold transition-all active:scale-95 ${
-              config.showBadge
-                ? 'border-amber-300 bg-amber-50 text-amber-900 shadow-sm'
-                : 'border-slate-200 bg-slate-50 text-slate-400'
-            }`}
-          >
-            {config.showBadge ? (
-              <Check className="w-3 h-3 text-amber-600 stroke-[3]" />
-            ) : null}
-            <span>Badge: {config.showBadge ? 'ON' : 'OFF'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Sticky Bottom Action Button for Generating Mockup */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl z-40 safe-bottom">
-        <div className="max-w-lg mx-auto flex items-center justify-between gap-3">
+        {/* Big Bottom Action Button */}
+        <div className="flex items-center space-x-2 pt-0.5">
           <button
             onClick={onBackToMedia}
-            className="py-3 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold text-xs hover:bg-slate-100 active:scale-95"
+            className="py-3 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold text-xs hover:bg-slate-100 active:scale-95 transition-all"
           >
             ← Media
           </button>
@@ -547,7 +509,7 @@ export const ProductOverlayStudio = forwardRef<
           <button
             onClick={handleGenerateMockup}
             disabled={isRendering}
-            className="flex-1 py-3 px-5 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-2"
+            className="flex-1 py-3 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-2"
           >
             {isRendering ? (
               <>
@@ -556,8 +518,8 @@ export const ProductOverlayStudio = forwardRef<
               </>
             ) : (
               <>
-                <span>Next: Create Mockup</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>Create Video Reel</span>
+                <ArrowRight className="w-4 h-4 stroke-[3]" />
               </>
             )}
           </button>
@@ -566,7 +528,7 @@ export const ProductOverlayStudio = forwardRef<
 
       {/* Fullscreen Rendering Loader Overlay */}
       {isRendering && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in">
           <div className="bg-white rounded-3xl max-w-xs w-full p-6 text-center space-y-4 shadow-2xl border border-slate-100">
             <div className="w-14 h-14 mx-auto rounded-2xl bg-orange-100 text-[#FF4800] flex items-center justify-center shadow-inner">
               <Loader2 className="w-7 h-7 animate-spin" />
@@ -574,7 +536,7 @@ export const ProductOverlayStudio = forwardRef<
 
             <div className="space-y-1">
               <h3 className="text-base font-black text-slate-900 tracking-tight">
-                Rendering Allmax Video
+                Rendering Allmax Reel
               </h3>
               <p className="text-xs text-slate-500 font-medium">
                 {renderMessage}
@@ -589,7 +551,7 @@ export const ProductOverlayStudio = forwardRef<
               />
             </div>
 
-            <div className="text-[11px] font-extrabold text-[#FF4800]">
+            <div className="text-xs font-black text-[#FF4800]">
               {renderProgress}% Complete
             </div>
           </div>
