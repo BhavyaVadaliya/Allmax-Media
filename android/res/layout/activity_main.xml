@@ -117,7 +117,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Target: http://192.168.1.16:3000"
+            android:text="Target: https://allmaxmedia.vercel.app"
             android:textColor="#64748B"
             android:textSize="13sp"
             android:gravity="center" />
@@ -126,31 +126,41 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="Ensure your computer and phone are connected to the same Wi-Fi, and Next.js is running."
+            android:text="Ensure your phone has an active internet connection or switch to the Live Vercel cloud server."
             android:textColor="#475569"
             android:textSize="13sp"
             android:gravity="center"
             android:lineSpacingExtra="3dp" />
 
         <Button
-            android:id="@+id/btnRetry"
-            android:layout_width="220dp"
+            android:id="@+id/btnConnectVercel"
+            android:layout_width="230dp"
             android:layout_height="48dp"
-            android:layout_marginTop="26dp"
+            android:layout_marginTop="22dp"
             android:background="#FF4800"
-            android:text="Retry Connection"
+            android:text="Connect to Live Vercel"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
         <Button
-            android:id="@+id/btnChangeUrl"
-            android:layout_width="220dp"
+            android:id="@+id/btnRetry"
+            android:layout_width="230dp"
             android:layout_height="44dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="10dp"
             android:background="#E2E8F0"
-            android:text="Change Server IP"
+            android:text="Retry Connection"
             android:textColor="#0F172A"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnChangeUrl"
+            android:layout_width="230dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="10dp"
+            android:background="#F1F5F9"
+            android:text="Change Server IP / URL"
+            android:textColor="#475569"
             android:textSize="13sp" />
     </LinearLayout>
 

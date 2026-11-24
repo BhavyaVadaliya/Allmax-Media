@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
 
     private static final String PREFS_NAME = "AllmaxStudioPrefs";
     private static final String KEY_SERVER_URL = "server_url";
-    private static final String DEFAULT_SERVER_URL = "http://192.168.1.16:3000";
+    private static final String DEFAULT_SERVER_URL = "https://allmaxmedia.vercel.app";
     private static final int REQUEST_PERMISSIONS = 101;
     private static final int REQUEST_FILE_CHOOSER = 102;
 
@@ -53,6 +53,7 @@ public class MainActivity extends Activity {
     private TextView tvServerBadge;
     private ImageButton btnRefresh;
     private ImageButton btnSettings;
+    private Button btnConnectVercel;
     private Button btnRetry;
     private Button btnChangeUrl;
 
@@ -80,6 +81,7 @@ public class MainActivity extends Activity {
         tvServerBadge = findViewById(R.id.tvServerBadge);
         btnRefresh = findViewById(R.id.btnRefresh);
         btnSettings = findViewById(R.id.btnSettings);
+        btnConnectVercel = findViewById(R.id.btnConnectVercel);
         btnRetry = findViewById(R.id.btnRetry);
         btnChangeUrl = findViewById(R.id.btnChangeUrl);
 
@@ -100,6 +102,15 @@ public class MainActivity extends Activity {
             }
         });
 
+        btnConnectVercel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveServerUrl(DEFAULT_SERVER_URL);
+                loadCurrentUrl();
+                Toast.makeText(MainActivity.this, "Connecting to Live Vercel...", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         btnRetry.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -116,7 +127,13 @@ public class MainActivity extends Activity {
     }
 
     private String getServerUrl() {
-        return prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL);
+        String url = prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL);
+        // Auto-migrate from old local development IPs to live Vercel URL
+        if (url == null || url.trim().isEmpty() || url.contains("192.168.1.16") || url.contains("10.0.2.2") || url.contains("localhost")) {
+            url = DEFAULT_SERVER_URL;
+            prefs.edit().putString(KEY_SERVER_URL, url).apply();
+        }
+        return url;
     }
 
     private void saveServerUrl(String url) {
@@ -125,7 +142,7 @@ public class MainActivity extends Activity {
         }
         url = url.trim();
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            url = "http://" + url;
+            url = "https://" + url;
         }
         prefs.edit().putString(KEY_SERVER_URL, url).apply();
     }
@@ -134,7 +151,7 @@ public class MainActivity extends Activity {
         String url = getServerUrl();
         errorView.setVisibility(View.GONE);
         webView.setVisibility(View.VISIBLE);
-        tvServerBadge.setText("Syncing...");
+        tvServerBadge.setText("Connecting...");
         tvServerBadge.setTextColor(0xFFD97706);
         webView.loadUrl(url);
     }
@@ -150,7 +167,7 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
 
-        // Force fresh load on reload for instant code updates
+        // Standard caching with support for live reload
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -232,7 +249,7 @@ public class MainActivity extends Activity {
                     return false;
                 }
 
-                // If external (like TikTok, Instagram, AllmaxNutrition external link), open in external app
+                // If external (like TikTok, Instagram, AllmaxNutrition website), open in device default browser or app
                 if (url.startsWith("http://") || url.startsWith("https://")) {
                     try {
                         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -255,7 +272,7 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                tvServerBadge.setText("Live");
+                tvServerBadge.setText("Live Cloud");
                 tvServerBadge.setTextColor(0xFF059669);
             }
 
@@ -303,11 +320,19 @@ public class MainActivity extends Activity {
         builder.setView(dialogView);
 
         final EditText etServerUrl = dialogView.findViewById(R.id.etServerUrl);
+        Button btnPresetVercel = dialogView.findViewById(R.id.btnPresetVercel);
         Button btnPresetLan = dialogView.findViewById(R.id.btnPresetLan);
         Button btnPresetEmu = dialogView.findViewById(R.id.btnPresetEmu);
 
         etServerUrl.setText(getServerUrl());
         etServerUrl.setSelection(etServerUrl.getText().length());
+
+        btnPresetVercel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                etServerUrl.setText(DEFAULT_SERVER_URL);
+            }
+        });
 
         btnPresetLan.setOnClickListener(new View.OnClickListener() {
             @Override
