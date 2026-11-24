@@ -18,6 +18,10 @@ import {
   Volume2,
   VolumeX,
   ArrowUpRight,
+  Sparkles,
+  Play,
+  Pause,
+  ExternalLink,
 } from 'lucide-react';
 
 interface ExportPublishStepProps {
@@ -35,11 +39,12 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
 }) => {
   const [captionTemplates, setCaptionTemplates] = useState<CaptionTemplate[]>([]);
   const [selectedTone, setSelectedTone] = useState<CaptionTone>('gymtok');
-  const [customCaption, setCustomCaption] = useState<string>('');
+  const [captionText, setCaptionText] = useState<string>('');
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [socialModal, setSocialModal] = useState<'tiktok' | 'instagram' | null>(null);
 
   const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -47,15 +52,24 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
     setCaptionTemplates(templates);
     const active = templates.find((t) => t.tone === selectedTone) || templates[0];
     if (active) {
-      setCustomCaption(active.caption);
+      setCaptionText(active.caption);
     }
   }, [product, selectedTone]);
 
   const activeTemplate =
     captionTemplates.find((t) => t.tone === selectedTone) || captionTemplates[0];
 
+  const handleSelectTone = (tone: CaptionTone) => {
+    setSelectedTone(tone);
+    const tpl = captionTemplates.find((t) => t.tone === tone);
+    if (tpl) {
+      setCaptionText(tpl.caption);
+    }
+  };
+
   const handleCopyCaption = async () => {
-    const fullText = `${customCaption}\n\n${activeTemplate?.hashtags.join(' ')}`;
+    const hashtags = activeTemplate?.hashtags.join(' ') || '';
+    const fullText = `${captionText}\n\n${hashtags}`;
     try {
       await navigator.clipboard.writeText(fullText);
       setIsCopied(true);
@@ -74,7 +88,10 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
     document.body.removeChild(link);
   };
 
-  const handleTikTokUpload = async () => {
+  const handleShareToPlatform = async (platform: 'instagram' | 'tiktok') => {
+    const hashtags = activeTemplate?.hashtags.join(' ') || '';
+    const shareText = `${captionText}\n\n${hashtags}`;
+
     if (navigator.share && renderResult.blob) {
       try {
         const file = new File([renderResult.blob], renderResult.filename, {
@@ -82,195 +99,243 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
         });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: `Allmax ${product.name} Mockup`,
-            text: `${customCaption}\n\n${activeTemplate?.hashtags.join(' ')}`,
+            title: `Allmax ${product.name} Workout Reel`,
+            text: shareText,
             files: [file],
           });
           return;
         }
-      } catch (err) {}
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.warn('Native share failed, showing fallback modal:', err);
+        }
+      }
     }
-    handleCopyCaption();
-    setSocialModal('tiktok');
+
+    // Fallback: Copy caption and trigger guidance modal
+    await handleCopyCaption();
+    setSocialModal(platform);
   };
 
-  const handleInstagramUpload = async () => {
-    if (navigator.share && renderResult.blob) {
-      try {
-        const file = new File([renderResult.blob], renderResult.filename, {
-          type: renderResult.blob.type,
-        });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: `Allmax ${product.name} Mockup`,
-            text: `${customCaption}\n\n${activeTemplate?.hashtags.join(' ')}`,
-            files: [file],
-          });
-          return;
-        }
-      } catch (err) {}
+  const toggleVideoPlayback = () => {
+    if (!videoRef.current) return;
+    if (isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      videoRef.current.play();
+      setIsPlaying(true);
     }
-    handleCopyCaption();
-    setSocialModal('instagram');
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto space-y-3.5 py-1 px-1">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-base sm:text-xl font-black text-slate-900 tracking-tight">
-            Step 3: Download &amp; Share
-          </h1>
-          <p className="text-[11px] text-slate-500">
-            Video created with {product.name} overlay
-          </p>
-        </div>
+    <div className="w-full max-w-lg mx-auto space-y-3.5 py-1 px-1 pb-20 sm:pb-8">
+      {/* Top Instagram Post Composer Card: Thumbnail on Left, Caption on Right */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-sm space-y-3">
+        <div className="flex gap-3 items-start">
+          {/* Post Preview Thumbnail */}
+          <div className="relative w-20 sm:w-24 aspect-[9/16] rounded-xl overflow-hidden bg-black shrink-0 border border-slate-200 shadow-inner group">
+            {renderResult.mediaType === 'video' ? (
+              <video
+                ref={videoRef}
+                key={renderResult.url}
+                src={renderResult.url}
+                autoPlay
+                loop
+                muted={isMuted}
+                playsInline
+                className="w-full h-full object-cover"
+                onClick={toggleVideoPlayback}
+              />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={renderResult.url}
+                alt="Rendered Mockup"
+                className="w-full h-full object-cover"
+              />
+            )}
 
-        <div className="flex items-center space-x-1.5 text-xs font-bold">
-          <button
-            onClick={onTweakPosition}
-            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700"
-          >
-            <Sliders className="w-3 h-3" />
-            <span>Adjust</span>
-          </button>
-          <button
-            onClick={onNewMockup}
-            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-700"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>New</span>
-          </button>
-        </div>
-      </div>
+            {/* Subtle Sound & Play Overlays */}
+            {renderResult.mediaType === 'video' && (
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                className="absolute bottom-1 right-1 p-1 rounded-full bg-black/60 text-white"
+                title={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? <VolumeX className="w-2.5 h-2.5" /> : <Volume2 className="w-2.5 h-2.5" />}
+              </button>
+            )}
 
-      {/* Video Preview Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-md space-y-2.5">
-        <div className="relative aspect-[9/16] h-[260px] sm:h-[320px] mx-auto bg-slate-950 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
-          {renderResult.mediaType === 'video' ? (
-            <video
-              ref={videoRef}
-              key={renderResult.url}
-              src={renderResult.url}
-              controls
-              autoPlay
-              loop
-              muted={isMuted}
-              playsInline
-              className="w-full h-full object-cover"
+            {/* Small Product Badge */}
+            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-[7px] font-black text-white uppercase tracking-tight">
+              AM
+            </div>
+          </div>
+
+          {/* Caption Input Field (Instagram "Write a caption...") */}
+          <div className="flex-1 min-w-0 flex flex-col justify-between h-full space-y-1.5">
+            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+              <span>Write a caption...</span>
+              <span className="text-[10px] text-slate-400">
+                {captionText.length} chars
+              </span>
+            </div>
+
+            <textarea
+              value={captionText}
+              onChange={(e) => setCaptionText(e.target.value)}
+              rows={4}
+              className="w-full text-xs text-slate-800 placeholder-slate-400 bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-[#FF4800] focus:border-[#FF4800] resize-none leading-relaxed"
+              placeholder="Write a caption for your reel..."
             />
-          ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={renderResult.url}
-              alt="Rendered Mockup"
-              className="w-full h-full object-cover"
-            />
-          )}
-
-          {renderResult.mediaType === 'video' && (
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded-full text-[10px] text-white flex items-center space-x-1"
-            >
-              {isMuted ? (
-                <>
-                  <VolumeX className="w-3 h-3 text-slate-400" />
-                  <span>Muted</span>
-                </>
-              ) : (
-                <>
-                  <Volume2 className="w-3 h-3 text-emerald-400" />
-                  <span>Sound On</span>
-                </>
-              )}
-            </button>
-          )}
-        </div>
-
-        {/* Big Download Button */}
-        <button
-          onClick={handleDownload}
-          className="w-full py-3.5 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
-        >
-          <Download className="w-4 h-4 stroke-[2.5]" />
-          <span>Download Video (.mp4)</span>
-        </button>
-      </div>
-
-      {/* Social Direct Share Buttons */}
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={handleTikTokUpload}
-          className="flex items-center justify-center space-x-1.5 py-3 px-3 rounded-xl bg-black text-white text-xs font-black shadow-sm active:scale-95"
-        >
-          <span>Share to TikTok</span>
-          <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
-        </button>
-
-        <button
-          onClick={handleInstagramUpload}
-          className="flex items-center justify-center space-x-1.5 py-3 px-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white text-xs font-black shadow-sm active:scale-95"
-        >
-          <span>Instagram Reels</span>
-          <ArrowUpRight className="w-3.5 h-3.5 text-white/90" />
-        </button>
-      </div>
-
-      {/* 1-Click Fitness Caption Box */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-800">Copy Post Caption:</span>
-          <span className="text-[10px] text-slate-400 font-semibold">{activeTemplate?.title}</span>
-        </div>
-
-        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed font-medium">
-          {customCaption}
-          <div className="mt-1 text-[#FF4800] font-bold text-[11px]">
-            {activeTemplate?.hashtags.join(' ')}
           </div>
         </div>
 
+        {/* Tone Style Pills */}
+        <div className="pt-2 border-t border-slate-100 space-y-1.5">
+          <div className="flex items-center space-x-1 text-[11px] font-bold text-slate-600">
+            <Sparkles className="w-3 h-3 text-[#FF4800]" />
+            <span>Caption Style:</span>
+          </div>
+
+          <div className="flex space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {captionTemplates.map((tpl) => {
+              const isSelected = selectedTone === tpl.tone;
+              return (
+                <button
+                  key={tpl.tone}
+                  onClick={() => handleSelectTone(tpl.tone)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all active:scale-95 ${
+                    isSelected
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {tpl.title}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Hashtags Strip & Copy Button */}
+        <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+          <div className="text-[11px] font-bold text-[#FF4800] truncate max-w-full">
+            {activeTemplate?.hashtags.join(' ')}
+          </div>
+
+          <button
+            onClick={handleCopyCaption}
+            className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center justify-center space-x-1.5 shrink-0 active:scale-95 ${
+              isCopied
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-800 shadow-sm'
+                : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+            }`}
+          >
+            {isCopied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                <span>Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5 text-slate-500" />
+                <span>Copy Caption</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Primary Download Button */}
+      <button
+        onClick={handleDownload}
+        className="w-full py-3.5 px-4 rounded-2xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
+      >
+        <Download className="w-4 h-4 stroke-[2.5]" />
+        <span>Download Video to Device (.mp4)</span>
+      </button>
+
+      {/* Social Post Rows (Instagram & TikTok) */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+          Share to Social Platforms:
+        </span>
+
+        <div className="grid grid-cols-2 gap-2">
+          {/* Instagram Reels Button */}
+          <button
+            onClick={() => handleShareToPlatform('instagram')}
+            className="flex items-center justify-center space-x-2 py-3 px-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white text-xs font-black shadow-md shadow-pink-500/20 active:scale-95 transition-transform"
+          >
+            <span>Instagram Reels</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+
+          {/* TikTok Button */}
+          <button
+            onClick={() => handleShareToPlatform('tiktok')}
+            className="flex items-center justify-center space-x-2 py-3 px-3 rounded-xl bg-black text-white text-xs font-black shadow-md shadow-black/20 active:scale-95 transition-transform"
+          >
+            <span>TikTok Post</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation Options: Adjust Position or Create Another */}
+      <div className="flex items-center justify-between px-1">
         <button
-          onClick={handleCopyCaption}
-          className={`w-full py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center space-x-2 active:scale-95 ${
-            isCopied
-              ? 'border-emerald-300 bg-emerald-50 text-emerald-800 shadow-sm'
-              : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-800 shadow-sm'
-          }`}
+          onClick={onTweakPosition}
+          className="flex items-center space-x-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3 py-2 rounded-xl active:scale-95"
         >
-          {isCopied ? (
-            <>
-              <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
-              <span>Copied to Clipboard!</span>
-            </>
-          ) : (
-            <>
-              <Copy className="w-3.5 h-3.5 text-slate-500" />
-              <span>Copy Caption &amp; Hashtags</span>
-            </>
-          )}
+          <Sliders className="w-3.5 h-3.5" />
+          <span>Adjust Position</span>
+        </button>
+
+        <button
+          onClick={onNewMockup}
+          className="flex items-center space-x-1.5 text-xs font-bold text-slate-600 hover:text-[#FF4800] bg-white border border-slate-200 px-3 py-2 rounded-xl active:scale-95"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Create New Post</span>
         </button>
       </div>
 
-      {/* Social Modal */}
+      {/* Social Share Fallback Guidance Modal */}
       {socialModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3 shadow-2xl border border-slate-200 text-center">
-            <h3 className="font-extrabold text-slate-900 text-sm">
-              Ready to Share to {socialModal === 'tiktok' ? 'TikTok' : 'Instagram'}!
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              1. Video has been downloaded to your phone.<br />
-              2. Fitness caption has been copied to your clipboard.<br />
-              3. Open {socialModal === 'tiktok' ? 'TikTok' : 'Instagram'} and paste the caption!
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-200 text-center">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-orange-50 text-[#FF4800] flex items-center justify-center">
+              <Share2 className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="font-extrabold text-slate-900 text-sm">
+                Ready to Share to {socialModal === 'tiktok' ? 'TikTok' : 'Instagram'}!
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Caption copied to clipboard! Tap below to download the video and post on{' '}
+                {socialModal === 'tiktok' ? 'TikTok' : 'Instagram'}.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                handleDownload();
+                setSocialModal(null);
+              }}
+              className="w-full py-2.5 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white text-xs font-black shadow-md"
+            >
+              Download &amp; Open {socialModal === 'tiktok' ? 'TikTok' : 'Instagram'}
+            </button>
+
             <button
               onClick={() => setSocialModal(null)}
-              className="w-full py-2.5 rounded-xl bg-[#FF4800] text-white text-xs font-bold shadow"
+              className="text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto"
             >
-              Open App &amp; Post
+              Cancel
             </button>
           </div>
         </div>

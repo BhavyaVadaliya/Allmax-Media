@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { RotateCcw, Smartphone, Check } from 'lucide-react';
+import { ChevronLeft, X, Smartphone, ArrowRight } from 'lucide-react';
 
 interface NavbarProps {
   currentStep: 1 | 2 | 3;
@@ -10,6 +10,9 @@ interface NavbarProps {
   canNavigateToStep3: boolean;
   onReset: () => void;
   onOpenMobileModal: () => void;
+  onNext?: () => void;
+  nextLabel?: string;
+  isNextDisabled?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -19,94 +22,90 @@ export const Navbar: React.FC<NavbarProps> = ({
   canNavigateToStep3,
   onReset,
   onOpenMobileModal,
+  onNext,
+  nextLabel = 'Next',
+  isNextDisabled = false,
 }) => {
-  const stepTitles = {
-    1: '1. Media',
-    2: '2. Product',
-    3: '3. Share',
+  const getHeaderTitle = () => {
+    switch (currentStep) {
+      case 1:
+        return 'New Post';
+      case 2:
+        return 'Edit Mockup';
+      case 3:
+        return 'Share';
+    }
   };
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
-      <div className="max-w-6xl mx-auto px-3 sm:px-6">
-        <div className="flex items-center justify-between h-13 sm:h-15 py-2">
-          {/* Brand Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#FF4800] flex items-center justify-center font-black text-xs sm:text-sm text-white shadow-sm shrink-0">
-              AM
+      <div className="max-w-xl mx-auto px-4 h-13 flex items-center justify-between">
+        {/* Left Action: Close / Back / Reset */}
+        <div className="flex items-center min-w-[70px]">
+          {currentStep === 1 ? (
+            <div className="flex items-center space-x-1.5">
+              <div className="w-6 h-6 rounded-md bg-[#FF4800] flex items-center justify-center font-black text-[10px] text-white">
+                AM
+              </div>
+              <span className="font-extrabold text-slate-900 tracking-tight text-xs uppercase">
+                Allmax
+              </span>
             </div>
-            <span className="font-black text-slate-900 tracking-tight text-sm sm:text-base">
-              ALLMAX <span className="text-[#FF4800] font-normal">STUDIO</span>
-            </span>
-          </div>
-
-          {/* Center 3-Step Pill (Desktop: Interactive Bar / Mobile: Clean Badge) */}
-          <div className="hidden sm:flex items-center space-x-1 bg-slate-100 p-1 rounded-full border border-slate-200 text-xs font-bold">
+          ) : (
             <button
-              onClick={() => onStepClick(1)}
-              className={`px-3 py-1 rounded-full transition-all ${
-                currentStep === 1
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900'
+              onClick={() => onStepClick((currentStep - 1) as 1 | 2)}
+              className="flex items-center space-x-0.5 text-xs font-bold text-slate-700 hover:text-slate-900 active:scale-95"
+            >
+              <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+              <span>Back</span>
+            </button>
+          )}
+        </div>
+
+        {/* Center Title (Instagram Style) */}
+        <div className="text-center flex-1">
+          <span className="font-extrabold text-sm text-slate-900 tracking-tight block">
+            {getHeaderTitle()}
+          </span>
+          <span className="text-[10px] text-slate-400 font-semibold block -mt-0.5">
+            Step {currentStep} of 3
+          </span>
+        </div>
+
+        {/* Right Action: Next Button / Download / APK */}
+        <div className="flex items-center justify-end min-w-[70px] space-x-1">
+          {currentStep === 1 && (
+            <button
+              onClick={onNext}
+              disabled={isNextDisabled || !canNavigateToStep2}
+              className={`text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-md transition-all ${
+                canNavigateToStep2 && !isNextDisabled
+                  ? 'text-[#FF4800] hover:text-[#E63E00] active:scale-95'
+                  : 'text-slate-300 opacity-40 cursor-not-allowed'
               }`}
             >
-              1. Media
+              Next →
             </button>
-            <button
-              disabled={!canNavigateToStep2}
-              onClick={() => canNavigateToStep2 && onStepClick(2)}
-              className={`px-3 py-1 rounded-full transition-all ${
-                currentStep === 2
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : canNavigateToStep2
-                  ? 'text-slate-500 hover:text-slate-900'
-                  : 'text-slate-400 opacity-40 cursor-not-allowed'
-              }`}
-            >
-              2. Product
-            </button>
-            <button
-              disabled={!canNavigateToStep3}
-              onClick={() => canNavigateToStep3 && onStepClick(3)}
-              className={`px-3 py-1 rounded-full transition-all ${
-                currentStep === 3
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : canNavigateToStep3
-                  ? 'text-slate-500 hover:text-slate-900'
-                  : 'text-slate-400 opacity-40 cursor-not-allowed'
-              }`}
-            >
-              3. Share
-            </button>
-          </div>
+          )}
 
-          {/* Mobile Single Step Indicator */}
-          <div className="sm:hidden flex items-center bg-orange-50 border border-orange-200/80 px-2.5 py-1 rounded-full text-[11px] font-black text-[#FF4800]">
-            <span>{stepTitles[currentStep]}</span>
-          </div>
-
-          {/* Right Actions */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2">
+          {currentStep === 2 && (
             <button
-              onClick={onOpenMobileModal}
-              className="hidden md:flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#FF4800] border border-orange-200 text-xs font-bold transition-all shadow-sm"
-              title="Download Android APK"
+              onClick={onNext}
+              disabled={isNextDisabled}
+              className="text-xs font-black uppercase tracking-wider text-[#FF4800] hover:text-[#E63E00] px-2.5 py-1 rounded-md transition-all active:scale-95 disabled:opacity-40"
             >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>APK</span>
+              {nextLabel} →
             </button>
+          )}
 
-            {(canNavigateToStep2 || canNavigateToStep3) && (
-              <button
-                onClick={onReset}
-                className="flex items-center space-x-1 px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-600 transition-colors"
-                title="Start Over"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                <span>Reset</span>
-              </button>
-            )}
-          </div>
+          {currentStep === 3 && (
+            <button
+              onClick={onReset}
+              className="text-xs font-bold text-slate-600 hover:text-slate-900 px-2 py-1"
+            >
+              Done
+            </button>
+          )}
         </div>
       </div>
     </header>
