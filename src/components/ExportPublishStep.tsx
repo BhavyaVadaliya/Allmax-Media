@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   RenderResult,
   AllmaxProduct,
@@ -18,7 +18,11 @@ import {
   Volume2,
   VolumeX,
   ArrowUpRight,
-  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Play,
+  Pause,
+  Maximize2,
 } from 'lucide-react';
 
 interface ExportPublishStepProps {
@@ -44,14 +48,19 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  // Draggable bottom sheet state (slider)
+  const [isSheetCollapsed, setIsSheetCollapsed] = useState<boolean>(false);
+  const [dragY, setDragY] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const dragStartYRef = useRef<number>(0);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const templates = getCaptionTemplates(product);
     setCaptionTemplates(templates);
     const active = templates.find((t) => t.tone === selectedTone) || templates[0];
     if (active) {
-      setCaptionText(
-        `${active.caption}\n\n${active.hashtags.join(' ')}`
-      );
+      setCaptionText(`${active.caption}\n\n${active.hashtags.join(' ')}`);
     }
   }, [product, selectedTone]);
 
@@ -121,10 +130,95 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
     }
   };
 
+  // Touch Drag Handlers for Bottom Sheet Slider
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    setIsDragging(true);
+    dragStartYRef.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - dragStartYRef.current;
+
+    // If expanded, allow dragging down (positive delta)
+    if (!isSheetCollapsed && deltaY > 0) {
+      setDragY(deltaY);
+    } else if (isSheetCollapsed && deltaY < 0) {
+      // If collapsed, allow dragging up (negative delta)
+      setDragY(deltaY);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+
+    if (!isSheetCollapsed) {
+      if (dragY > 60) {
+        setIsSheetCollapsed(true);
+      }
+    } else {
+      if (dragY < -60) {
+        setIsSheetCollapsed(false);
+      }
+    }
+    setDragY(0);
+  };
+
+  // Mouse Drag Handlers for Desktop Testing
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragStartYRef.current = e.clientY;
+  };
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
+      const deltaY = e.clientY - dragStartYRef.current;
+      if (!isSheetCollapsed && deltaY > 0) {
+        setDragY(deltaY);
+      } else if (isSheetCollapsed && deltaY < 0) {
+        setDragY(deltaY);
+      }
+    },
+    [isDragging, isSheetCollapsed]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (!isSheetCollapsed) {
+      if (dragY > 60) {
+        setIsSheetCollapsed(true);
+      }
+    } else {
+      if (dragY < -60) {
+        setIsSheetCollapsed(false);
+      }
+    }
+    setDragY(0);
+  }, [isDragging, isSheetCollapsed, dragY]);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
   return (
-    <div className="h-full flex flex-col justify-between overflow-hidden select-none">
-      {/* 1. Top Video Preview Player (Matches Phone 5 in reference image) */}
-      <div className="relative w-full h-[32vh] max-h-[260px] bg-black shrink-0 overflow-hidden flex items-center justify-center">
+    <div className="relative h-full w-full overflow-hidden select-none bg-black flex flex-col justify-between">
+      {/* 1. Full-Height 9:16 Vertical Video Reel (Behind the sheet) */}
+      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black overflow-hidden">
         {renderResult.mediaType === 'video' ? (
           <video
             ref={videoRef}
@@ -142,128 +236,188 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
           <img
             src={renderResult.url}
             alt="Rendered Mockup"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover cursor-pointer"
           />
         )}
 
-        {/* Video Sound Toggle Button */}
-        {renderResult.mediaType === 'video' && (
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className="absolute bottom-2.5 right-2.5 p-1.5 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 shadow-md"
-          >
-            {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-          </button>
+        {/* Floating Top Overlays on Video */}
+        <div className="absolute top-3 left-3 z-20 flex items-center space-x-2">
+          {renderResult.mediaType === 'video' && (
+            <button
+              onClick={toggleVideoPlayback}
+              className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-90 transition-transform shadow-lg"
+              title={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
+            </button>
+          )}
+
+          {renderResult.mediaType === 'video' && (
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-90 transition-transform shadow-lg"
+              title={isMuted ? 'Unmute' : 'Mute'}
+            >
+              {isMuted ? <VolumeX className="w-3.5 h-3.5 text-slate-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+            </button>
+          )}
+        </div>
+
+        {/* Floating Fullscreen Mode Indicator when Collapsed */}
+        {isSheetCollapsed && (
+          <div className="absolute top-3 right-3 z-20 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-extrabold flex items-center space-x-1 border border-white/20 shadow-lg">
+            <span>Watching Full Reel</span>
+          </div>
         )}
       </div>
 
-      {/* 2. Middle & Bottom Composer Sheet (Matches Phone 5 layout) */}
-      <div className="flex-1 min-h-0 bg-white p-3 flex flex-col justify-between overflow-y-auto scrollbar-none safe-bottom space-y-2.5">
-        {/* Caption Card with char counter & style pills */}
-        <div className="border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2 bg-white">
-          <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
-            <span>Write a caption...</span>
-            <span className="text-slate-400">{captionText.length} chars</span>
-          </div>
-
-          <textarea
-            value={captionText}
-            onChange={(e) => setCaptionText(e.target.value)}
-            rows={3}
-            className="w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent border-0 p-0 focus:outline-none resize-none leading-relaxed font-medium"
-            placeholder="Write a caption for your reel..."
-          />
-
-          {/* Style Pills Row (Matches Phone 5: HIGH-ENERGY GYMTOK & ATHLETE & COACH BREAKDOWN) */}
-          <div className="pt-2 border-t border-slate-100 flex space-x-1.5 overflow-x-auto scrollbar-none">
-            <button
-              onClick={() => handleSelectTone('gymtok')}
-              className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider whitespace-nowrap transition-all active:scale-95 ${
-                selectedTone === 'gymtok'
-                  ? 'bg-black text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              HIGH-ENERGY GYMTOK
-            </button>
-
-            <button
-              onClick={() => handleSelectTone('athlete')}
-              className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider whitespace-nowrap transition-all active:scale-95 ${
-                selectedTone === 'athlete'
-                  ? 'bg-black text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              ATHLETE &amp; COACH BREAKDOWN
-            </button>
-
-            <button
-              onClick={() => handleSelectTone('promo')}
-              className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider whitespace-nowrap transition-all active:scale-95 ${
-                selectedTone === 'promo'
-                  ? 'bg-black text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              PRE-WORKOUT PUMP
-            </button>
-          </div>
-        </div>
-
-        {/* Direct Share Section (Matches Phone 5 DIRECT SHARE: Instagram Reels & TikTok) */}
-        <div className="space-y-1.5">
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-900 block px-0.5">
-            DIRECT SHARE:
-          </span>
-
-          <div className="grid grid-cols-2 gap-2">
-            {/* Instagram Reels Button */}
-            <button
-              onClick={() => handleShareToPlatform('instagram')}
-              className="flex items-center justify-center space-x-1.5 py-3 px-3 rounded-xl bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white text-xs font-black shadow-md shadow-pink-500/20 active:scale-95 transition-transform"
-            >
-              <span>Instagram Reels</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-
-            {/* TikTok Button */}
-            <button
-              onClick={() => handleShareToPlatform('tiktok')}
-              className="flex items-center justify-center space-x-1.5 py-3 px-3 rounded-xl bg-black text-white text-xs font-black shadow-md shadow-black/20 active:scale-95 transition-transform"
-            >
-              <span>TikTok</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-300" />
-            </button>
-          </div>
-        </div>
-
-        {/* Primary Download Button (Matches Phone 5 DOWNLOAD VIDEO (.MP4)) */}
-        <button
-          onClick={handleDownload}
-          className="w-full py-3.5 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
+      {/* 2. Draggable Bottom Sheet Slider (Caption, Share, Download) */}
+      <div
+        ref={sheetRef}
+        style={{
+          transform: isSheetCollapsed
+            ? `translateY(calc(100% - 68px + ${isDragging && dragY < 0 ? dragY : 0}px))`
+            : `translateY(${isDragging && dragY > 0 ? dragY : 0}px)`,
+          transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+        className="absolute bottom-0 left-0 right-0 z-30 bg-white rounded-t-3xl shadow-[0_-12px_40px_rgba(0,0,0,0.45)] border-t border-slate-200/90 flex flex-col max-h-[72vh] safe-bottom"
+      >
+        {/* Drag Handle & Slider Header */}
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onClick={() => setIsSheetCollapsed(!isSheetCollapsed)}
+          className="w-full pt-2.5 pb-2 px-4 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing hover:bg-slate-50 transition-colors rounded-t-3xl border-b border-slate-100"
         >
-          <Download className="w-4 h-4 stroke-[3]" />
-          <span>DOWNLOAD VIDEO (.MP4)</span>
-        </button>
+          {/* Slider Pill Handle */}
+          <div className="w-12 h-1.5 bg-slate-300 rounded-full mb-1.5" />
 
-        {/* Bottom Navigation Links: Adjust Position & New Video */}
-        <div className="flex items-center justify-between px-1 pt-0.5 text-xs font-bold text-slate-700">
+          {/* Interactive Drag Hint */}
+          <div className="flex items-center space-x-1 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+            {isSheetCollapsed ? (
+              <>
+                <ChevronUp className="w-3.5 h-3.5 text-[#FF4800] stroke-[3] animate-bounce" />
+                <span className="text-[#FF4800]">Swipe up for Caption &amp; Share</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 stroke-[3]" />
+                <span>Swipe down to view full reel</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Sheet Content (When open, scrollable if needed) */}
+        <div className="p-3 sm:p-4 overflow-y-auto scrollbar-none space-y-3">
+          {/* Caption Card with char counter & style pills */}
+          <div className="border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2 bg-white">
+            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+              <span>Write a caption...</span>
+              <span className="text-slate-400">{captionText.length} chars</span>
+            </div>
+
+            <textarea
+              value={captionText}
+              onChange={(e) => setCaptionText(e.target.value)}
+              rows={3}
+              className="w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent border-0 p-0 focus:outline-none resize-none leading-relaxed font-medium"
+              placeholder="Write a caption for your reel..."
+            />
+
+            {/* Style Pills Row (HIGH-ENERGY GYMTOK, ATHLETE & COACH BREAKDOWN, PRE-WORKOUT PUMP) */}
+            <div className="pt-2 border-t border-slate-100 flex space-x-1.5 overflow-x-auto scrollbar-none">
+              <button
+                onClick={() => handleSelectTone('gymtok')}
+                className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider whitespace-nowrap transition-all active:scale-95 ${
+                  selectedTone === 'gymtok'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                HIGH-ENERGY GYMTOK
+              </button>
+
+              <button
+                onClick={() => handleSelectTone('athlete')}
+                className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider whitespace-nowrap transition-all active:scale-95 ${
+                  selectedTone === 'athlete'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                ATHLETE &amp; COACH BREAKDOWN
+              </button>
+
+              <button
+                onClick={() => handleSelectTone('promo')}
+                className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider whitespace-nowrap transition-all active:scale-95 ${
+                  selectedTone === 'promo'
+                    ? 'bg-black text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                PRE-WORKOUT PUMP
+              </button>
+            </div>
+          </div>
+
+          {/* Direct Share Section (Instagram Reels & TikTok) */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-900 block px-0.5">
+              DIRECT SHARE:
+            </span>
+
+            <div className="grid grid-cols-2 gap-2">
+              {/* Instagram Reels Button */}
+              <button
+                onClick={() => handleShareToPlatform('instagram')}
+                className="flex items-center justify-center space-x-1.5 py-3 px-3 rounded-xl bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white text-xs font-black shadow-md shadow-pink-500/20 active:scale-95 transition-transform"
+              >
+                <span>Instagram Reels</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </button>
+
+              {/* TikTok Button */}
+              <button
+                onClick={() => handleShareToPlatform('tiktok')}
+                className="flex items-center justify-center space-x-1.5 py-3 px-3 rounded-xl bg-black text-white text-xs font-black shadow-md shadow-black/20 active:scale-95 transition-transform"
+              >
+                <span>TikTok</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-slate-300" />
+              </button>
+            </div>
+          </div>
+
+          {/* Primary Download Button */}
           <button
-            onClick={onTweakPosition}
-            className="flex items-center space-x-1 py-1 px-2 rounded-lg hover:text-slate-900 active:scale-95"
+            onClick={handleDownload}
+            className="w-full py-3.5 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
           >
-            <Sliders className="w-3.5 h-3.5 text-slate-500" />
-            <span>Adjust Position</span>
+            <Download className="w-4 h-4 stroke-[3]" />
+            <span>DOWNLOAD VIDEO (.MP4)</span>
           </button>
 
-          <button
-            onClick={onNewMockup}
-            className="flex items-center space-x-1 py-1 px-2 rounded-lg hover:text-[#FF4800] active:scale-95"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-            <span>New Video</span>
-          </button>
+          {/* Bottom Navigation Links: Adjust Position & New Video */}
+          <div className="flex items-center justify-between px-1 pt-1 text-xs font-bold text-slate-700">
+            <button
+              onClick={onTweakPosition}
+              className="flex items-center space-x-1 py-1 px-2 rounded-lg hover:text-slate-900 active:scale-95"
+            >
+              <Sliders className="w-3.5 h-3.5 text-slate-500" />
+              <span>Adjust Position</span>
+            </button>
+
+            <button
+              onClick={onNewMockup}
+              className="flex items-center space-x-1 py-1 px-2 rounded-lg hover:text-[#FF4800] active:scale-95"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>New Video</span>
+            </button>
+          </div>
         </div>
       </div>
 
