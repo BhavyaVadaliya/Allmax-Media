@@ -355,12 +355,12 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
         </div>
       ) : (
         /* ============================================================== */
-        /* PHONE 2: MEDIA SELECTED STATE                                  */
+        /* PHONE 2: MEDIA SELECTED STATE (Matches Uploaded Image Exactly)  */
         /* ============================================================== */
         <div className="h-full flex flex-col justify-between overflow-hidden">
-          {/* Main Large Video Preview (Occupies upper viewport) */}
-          <div className="flex-1 min-h-0 relative flex items-center justify-center p-1 sm:p-2">
-            <div className="relative h-full aspect-[9/16] max-h-[58vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200 w-full">
+          {/* Main Large Video Preview (Occupies upper ~75-80% viewport) */}
+          <div className="flex-1 min-h-0 relative flex items-center justify-center p-2">
+            <div className="relative h-full aspect-[9/16] max-h-[72vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200 w-full">
               {selectedMedia.type === 'video' ? (
                 <video
                   key={selectedMedia.url}
@@ -382,7 +382,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
               )}
 
               {/* Floating Top Left: Pause / Play & Mute / Unmute */}
-              <div className="absolute top-3 left-3 z-30 flex items-center space-x-2">
+              <div className="absolute top-3.5 left-3.5 z-30 flex items-center space-x-2">
                 {selectedMedia.type === 'video' && (
                   <button
                     onClick={togglePlay}
@@ -404,81 +404,34 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
                 )}
               </div>
 
-              {/* Floating Top Right: Selected Badge */}
-              <div className="absolute top-3 right-3 z-30 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-extrabold flex items-center space-x-1.5 border border-white/20 shadow-lg">
-                <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+              {/* Floating Top Right: Selected Badge (Matches Uploaded Image) */}
+              <div className="absolute top-3.5 right-3.5 z-30 bg-black/65 backdrop-blur-md px-3.5 py-1.5 rounded-full text-[11px] text-white font-extrabold flex items-center space-x-1.5 border border-white/20 shadow-lg">
+                <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
                 <span>Selected</span>
-              </div>
-
-              {/* Floating Bottom Center: Replace Media Button */}
-              <div className="absolute bottom-3 left-0 right-0 z-30 flex justify-center">
-                <button
-                  onClick={() => onMediaSelected(null)}
-                  className="px-4 py-1.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[11px] font-bold border border-white/25 hover:bg-black/90 active:scale-95 transition-all flex items-center space-x-1.5 shadow-xl"
-                >
-                  <RefreshCw className="w-3 h-3 text-orange-400" />
-                  <span>Replace Media</span>
-                </button>
               </div>
             </div>
           </div>
 
-          {/* Docked Bottom Tray (Matches Phone 2 bottom section) */}
-          <div className="bg-white border-t border-slate-200 p-2.5 sm:p-3 shadow-2xl safe-bottom space-y-2">
-            {/* Row 1: Gallery & Camera buttons */}
-            <div className="grid grid-cols-2 gap-2">
+          {/* Clean Bottom Tray: Matches Uploaded Image Exactly (Replace Video + NEXT: ADD STICKER) */}
+          <div className="bg-[#F1F5F9]/95 backdrop-blur-md border-t border-slate-200/80 p-3 sm:p-4 shadow-2xl safe-bottom space-y-2.5 rounded-t-3xl">
+            {/* Centered "Replace Video" / "Replace Image" Pill Button */}
+            <div className="flex justify-center">
               <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all text-xs font-black text-slate-800 shadow-sm"
+                onClick={() => onMediaSelected(null)}
+                className="px-5 py-2 rounded-full bg-white text-slate-800 text-xs font-bold border border-slate-200/90 shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center space-x-2"
               >
-                <FolderOpen className="w-3.5 h-3.5 text-[#FF4800]" />
-                <span>From Gallery</span>
-              </button>
-
-              <button
-                onClick={startCamera}
-                className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all text-xs font-black text-slate-800 shadow-sm"
-              >
-                <Camera className="w-3.5 h-3.5 text-[#FF4800]" />
-                <span>Record Camera</span>
+                <RefreshCw className="w-3.5 h-3.5 text-[#FF4800]" />
+                <span>{selectedMedia.type === 'video' ? 'Replace Video' : 'Replace Image'}</span>
               </button>
             </div>
 
-            {/* Row 2: Demo Workout Clips Carousel */}
-            <div>
-              <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1 px-1">
-                <span>Or Choose Demo Workout Clips:</span>
-                <span className="text-[#FF4800] font-black">1-Tap Ready</span>
-              </div>
-
-              <div className="flex space-x-2 overflow-x-auto pb-0.5 scrollbar-none snap-x">
-                {SAMPLE_CREATOR_MEDIA.map((item) => {
-                  const isSelected = selectedMedia?.id === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => onMediaSelected(item)}
-                      className={`h-9 px-3 rounded-xl border flex items-center space-x-1.5 shrink-0 snap-start transition-all active:scale-95 text-xs ${
-                        isSelected
-                          ? 'border-[#FF4800] bg-orange-50 text-[#FF4800] font-black ring-1 ring-[#FF4800]'
-                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold'
-                      }`}
-                    >
-                      <Video className="w-3 h-3 shrink-0 text-[#FF4800]" />
-                      <span className="truncate max-w-[130px]">{item.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Row 3: Big Orange Primary Next Button */}
+            {/* Solid Orange "NEXT: ADD STICKER →" Button */}
             <button
               onClick={onProceedToStudio}
-              className="w-full py-3 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
+              className="w-full py-3.5 px-4 rounded-2xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-1.5"
             >
-              <span>NEXT: ADD SUPPLEMENT STICKER</span>
-              <span className="text-sm">→</span>
+              <span>NEXT: ADD STICKER</span>
+              <span className="text-base font-bold">→</span>
             </button>
           </div>
         </div>
