@@ -8,11 +8,10 @@ import {
   Square,
   AlertCircle,
   FileVideo,
-  FileImage,
   ArrowRight,
   Check,
-  Play,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import { MediaItem } from '@/types';
 import { SAMPLE_CREATOR_MEDIA } from '@/data/allmaxProducts';
@@ -20,18 +19,18 @@ import { SAMPLE_CREATOR_MEDIA } from '@/data/allmaxProducts';
 interface MediaCaptureStepProps {
   onMediaSelected: (media: MediaItem) => void;
   selectedMedia: MediaItem | null;
+  onProceedToStudio: () => void;
 }
 
 export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
   onMediaSelected,
   selectedMedia,
+  onProceedToStudio,
 }) => {
-  const [activeTab, setActiveTab] = useState<'upload' | 'camera'>('upload');
-  const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const [showCamera, setShowCamera] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
 
   const liveCameraRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -49,7 +48,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
-    setIsCameraActive(false);
+    setShowCamera(false);
     setIsRecording(false);
     setRecordingSeconds(0);
   }, []);
@@ -63,6 +62,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
   const startCamera = async () => {
     setCameraError(null);
     stopCameraStream();
+    setShowCamera(true);
 
     try {
       const constraints: MediaStreamConstraints = {
@@ -77,11 +77,9 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
         liveCameraRef.current.srcObject = stream;
         liveCameraRef.current.play();
       }
-      setIsCameraActive(true);
     } catch (err: any) {
       console.error('Camera access error:', err);
-      setCameraError('Could not access camera. Please allow camera permissions or upload a file.');
-      setIsCameraActive(false);
+      setCameraError('Could not open camera. Please allow camera permissions or upload a video.');
     }
   };
 
@@ -146,33 +144,10 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
     setIsRecording(false);
   };
 
-  const snapPhoto = () => {
-    if (!liveCameraRef.current) return;
-    const video = liveCameraRef.current;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const photoMedia: MediaItem = {
-        id: 'photo-' + Date.now(),
-        type: 'image',
-        sourceType: 'camera',
-        url,
-        blob,
-        name: `Camera_Photo.png`,
-      };
-      onMediaSelected(photoMedia);
-      stopCameraStream();
-    }, 'image/png');
-  };
-
-  const handleFile = (file: File) => {
     const isVideo = file.type.startsWith('video/');
     const isImage = file.type.startsWith('image/');
     if (!isVideo && !isImage) {
@@ -192,219 +167,150 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-4 sm:space-y-6 py-2 sm:py-6">
-      {/* Title */}
-      <div className="text-center max-w-xl mx-auto space-y-1.5 px-2">
-        <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
-          Select Your Workout Video or Photo
+    <div className="w-full max-w-xl mx-auto space-y-4 py-2 px-1">
+      {/* Hidden native file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="video/*,image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Screen Title */}
+      <div className="text-center space-y-1">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          Step 1: Choose Your Video
         </h1>
-        <p className="text-xs sm:text-sm text-slate-600">
-          Upload phone footage, record with your camera, or pick a real gym sample below.
+        <p className="text-xs text-slate-500">
+          Select workout footage to place the Allmax product onto
         </p>
       </div>
 
-      {/* Main Mode Switcher */}
-      <div className="flex justify-center px-2">
-        <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 inline-flex space-x-1 w-full sm:w-auto max-w-xs">
-          <button
-            onClick={() => {
-              stopCameraStream();
-              setActiveTab('upload');
-            }}
-            className={`flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-              activeTab === 'upload'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Upload className="w-4 h-4 text-[#FF4800]" />
-            <span>Upload File</span>
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('camera');
-              startCamera();
-            }}
-            className={`flex-1 sm:flex-none flex items-center justify-center space-x-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-              activeTab === 'camera'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Camera className="w-4 h-4 text-[#FF4800]" />
-            <span>Use Camera</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Upload & Preview Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 items-start">
-        {/* Left Side: Upload Box or Camera */}
-        <div className="md:col-span-7 space-y-4">
-          {activeTab === 'upload' ? (
-            /* Tactile Upload Box */
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                setIsDragging(false);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsDragging(false);
-                const file = e.dataTransfer.files?.[0];
-                if (file) handleFile(file);
-              }}
-              onClick={() => fileInputRef.current?.click()}
-              className={`bg-white border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition-all active:scale-[0.99] ${
-                isDragging
-                  ? 'border-[#FF4800] bg-orange-50/50'
-                  : 'border-slate-300 hover:border-[#FF4800] hover:bg-slate-50/80 shadow-sm'
-              }`}
+      {/* Camera Live Viewfinder Modal */}
+      {showCamera && (
+        <div className="bg-white border-2 border-slate-900 rounded-2xl p-4 space-y-3 shadow-xl animate-fade-in">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+            <span className="flex items-center space-x-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${isRecording ? 'bg-red-500 animate-ping' : 'bg-emerald-500'}`} />
+              <span>{isRecording ? `Recording (${recordingSeconds}s / 30s)` : 'Camera Ready'}</span>
+            </span>
+            <button
+              onClick={stopCameraStream}
+              className="text-xs text-slate-500 hover:text-slate-800 underline"
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/*,image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleFile(file);
-                }}
-              />
+              Cancel
+            </button>
+          </div>
 
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-orange-100 text-[#FF4800] mx-auto flex items-center justify-center mb-2.5">
-                <Upload className="w-6 h-6 stroke-[2.2]" />
-              </div>
+          <div className="relative aspect-[9/16] max-h-[300px] mx-auto bg-slate-950 rounded-xl overflow-hidden">
+            <video
+              ref={liveCameraRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover -scale-x-100"
+            />
+          </div>
 
-              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 mb-1">
-                Choose Video or Photo from Phone
-              </h3>
-              <p className="text-[11px] sm:text-xs text-slate-500 mb-3.5">
-                MP4, MOV, WebM, JPG, PNG (vertical 9:16 recommended)
-              </p>
-
-              <button
-                type="button"
-                className="inline-flex items-center space-x-1.5 px-5 py-2.5 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white text-xs font-bold uppercase tracking-wider shadow-md shadow-orange-500/20 transition-all"
-              >
-                <span>Browse Phone Gallery</span>
-              </button>
-            </div>
-          ) : (
-            /* Camera Viewfinder */
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 shadow-sm">
-              <div className="flex items-center justify-between text-xs font-medium text-slate-700">
-                <span className="flex items-center space-x-2">
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      isRecording ? 'bg-red-500 animate-ping' : isCameraActive ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
-                  />
-                  <span className="font-bold text-xs">{isRecording ? `Recording (${recordingSeconds}s / 30s)` : 'Camera Ready'}</span>
-                </span>
-              </div>
-
-              <div className="relative aspect-video sm:aspect-square max-h-[300px] bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center">
-                {isCameraActive ? (
-                  <video
-                    ref={liveCameraRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover -scale-x-100"
-                  />
-                ) : (
-                  <div className="text-center p-6 space-y-2">
-                    <Camera className="w-8 h-8 text-slate-500 mx-auto" />
-                    <button
-                      onClick={startCamera}
-                      className="px-4 py-2 bg-[#FF4800] text-white text-xs font-bold rounded-xl shadow"
-                    >
-                      Turn On Camera
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {cameraError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{cameraError}</span>
-                </div>
-              )}
-
-              {isCameraActive && (
-                <div className="flex items-center justify-center space-x-3 pt-1">
-                  {!isRecording ? (
-                    <button
-                      onClick={startRecording}
-                      className="flex items-center space-x-2 px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95"
-                    >
-                      <span className="w-2.5 h-2.5 rounded-full bg-white" />
-                      <span>Start Video</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={stopRecording}
-                      className="flex items-center space-x-2 px-5 py-2.5 rounded-full bg-slate-900 text-white font-bold text-xs uppercase tracking-wider shadow-sm active:scale-95"
-                    >
-                      <Square className="w-3 h-3 fill-red-500 text-red-500" />
-                      <span>Stop Video</span>
-                    </button>
-                  )}
-
-                  <button
-                    onClick={snapPhoto}
-                    className="px-4 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-all active:scale-95"
-                  >
-                    Take Photo
-                  </button>
-                </div>
-              )}
+          {cameraError && (
+            <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-center space-x-1.5">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{cameraError}</span>
             </div>
           )}
 
-          {/* Instant Gym Samples (Swipeable Carousel on Mobile) */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-2.5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#FF4800]" />
-                <span>Instant Gym Samples</span>
+          <div className="flex justify-center pt-1">
+            {!isRecording ? (
+              <button
+                onClick={startRecording}
+                className="flex items-center space-x-2 px-6 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider shadow-md active:scale-95"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                <span>Start Recording</span>
+              </button>
+            ) : (
+              <button
+                onClick={stopRecording}
+                className="flex items-center space-x-2 px-6 py-2.5 rounded-full bg-slate-900 text-white font-black text-xs uppercase tracking-wider shadow-md active:scale-95"
+              >
+                <Square className="w-3.5 h-3.5 fill-red-500 text-red-500" />
+                <span>Stop &amp; Use Video</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Main Choice Cards: If NO media selected yet */}
+      {!selectedMedia && !showCamera && (
+        <div className="space-y-3.5">
+          {/* Big Action Button 1: Upload from Phone */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full p-4 sm:p-5 rounded-2xl bg-white border-2 border-slate-200 hover:border-[#FF4800] text-left flex items-center space-x-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
+          >
+            <div className="w-12 h-12 rounded-xl bg-orange-100 text-[#FF4800] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Upload className="w-6 h-6 stroke-[2.5]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-base font-extrabold text-slate-900 block">
+                Choose Video from Phone
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">1-tap test</span>
+              <span className="text-xs text-slate-500 block mt-0.5">
+                Pick from gallery or files (MP4, MOV, WebM)
+              </span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#FF4800] group-hover:translate-x-0.5 transition-all shrink-0" />
+          </button>
+
+          {/* Big Action Button 2: Camera Record */}
+          <button
+            onClick={startCamera}
+            className="w-full p-4 sm:p-5 rounded-2xl bg-white border-2 border-slate-200 hover:border-[#FF4800] text-left flex items-center space-x-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
+          >
+            <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Camera className="w-6 h-6 stroke-[2.5]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-base font-extrabold text-slate-900 block">
+                Record with Camera
+              </span>
+              <span className="text-xs text-slate-500 block mt-0.5">
+                Take a quick live workout video right now
+              </span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#FF4800] group-hover:translate-x-0.5 transition-all shrink-0" />
+          </button>
+
+          {/* Instant 1-Tap Gym Sample Shortcuts */}
+          <div className="pt-2">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-[#FF4800]" />
+                <span>Or Test Instantly with Gym Video</span>
+              </span>
             </div>
 
-            <div className="flex sm:grid sm:grid-cols-3 gap-2.5 overflow-x-auto pb-1 scrollbar-none snap-x">
-              {SAMPLE_CREATOR_MEDIA.slice(0, 3).map((sample) => (
+            <div className="grid grid-cols-2 gap-2.5">
+              {SAMPLE_CREATOR_MEDIA.slice(0, 2).map((sample) => (
                 <button
                   key={sample.id}
-                  onClick={() => {
-                    stopCameraStream();
-                    onMediaSelected(sample);
-                  }}
-                  className={`min-w-[130px] sm:min-w-0 group relative rounded-xl overflow-hidden border text-left transition-all aspect-[4/3] bg-slate-100 shrink-0 snap-start active:scale-95 ${
-                    selectedMedia?.id === sample.id
-                      ? 'border-[#FF4800] ring-2 ring-[#FF4800]/30 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-400'
-                  }`}
+                  onClick={() => onMediaSelected(sample)}
+                  className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-[#FF4800] text-left flex items-center space-x-2.5 shadow-sm active:scale-95 transition-all"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={sample.thumbnail}
                     alt={sample.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    className="w-11 h-11 rounded-lg object-cover shrink-0"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-2 flex flex-col justify-end">
-                    <span className="text-[11px] font-bold text-white line-clamp-1 leading-tight">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-slate-900 truncate block">
                       {sample.name}
                     </span>
-                    <span className="text-[9px] text-slate-300 uppercase flex items-center space-x-1 mt-0.5">
-                      <Video className="w-2.5 h-2.5 text-orange-400" />
-                      <span>{sample.duration}s MP4</span>
+                    <span className="text-[10px] text-slate-400 font-semibold block">
+                      {sample.duration}s Video
                     </span>
                   </div>
                 </button>
@@ -412,69 +318,66 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
             </div>
           </div>
         </div>
+      )}
 
-        {/* Right Side: Selected Media Preview */}
-        <div className="md:col-span-5 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-              Selected Media Preview
-            </h3>
-            {selectedMedia && (
-              <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                <Check className="w-3 h-3 stroke-[3]" />
-                <span>Ready for Studio</span>
+      {/* When Media IS Selected: Compact Confirmation & Primary Proceed Button */}
+      {selectedMedia && !showCamera && (
+        <div className="space-y-4 animate-fade-in">
+          {/* Selected Video Preview Card */}
+          <div className="bg-white border-2 border-emerald-500/40 rounded-2xl p-3 sm:p-4 shadow-md space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center space-x-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Video Loaded &amp; Ready</span>
               </span>
-            )}
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs font-bold text-slate-500 hover:text-[#FF4800] flex items-center space-x-1"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Change</span>
+              </button>
+            </div>
+
+            {/* Compact Video Viewport (Clean, Not Oversized) */}
+            <div className="relative aspect-[9/16] max-h-[260px] mx-auto bg-slate-950 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+              {selectedMedia.type === 'video' ? (
+                <video
+                  key={selectedMedia.url}
+                  src={selectedMedia.url}
+                  controls
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={selectedMedia.url}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            <div className="text-center text-xs text-slate-600 font-medium truncate px-2">
+              {selectedMedia.name}
+            </div>
           </div>
 
-          {selectedMedia ? (
-            <div className="space-y-3">
-              {/* Media Preview Box */}
-              <div className="relative aspect-[9/16] max-h-[280px] sm:max-h-[380px] mx-auto bg-slate-950 rounded-xl overflow-hidden shadow-md flex items-center justify-center">
-                {selectedMedia.type === 'video' ? (
-                  <video
-                    key={selectedMedia.url}
-                    src={selectedMedia.url}
-                    controls
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={selectedMedia.url}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-
-              {/* Media Info */}
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs space-y-1">
-                <div className="flex justify-between text-slate-500 text-[11px]">
-                  <span>Filename:</span>
-                  <span className="font-bold text-slate-900 truncate max-w-[180px]">
-                    {selectedMedia.name}
-                  </span>
-                </div>
-                <div className="flex justify-between text-slate-500 text-[11px]">
-                  <span>Type:</span>
-                  <span className="capitalize font-semibold text-slate-800">{selectedMedia.type} ({selectedMedia.sourceType})</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="aspect-[9/16] max-h-[240px] sm:max-h-[320px] rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center p-6 text-slate-400">
-              <FileVideo className="w-10 h-10 stroke-[1.5] text-slate-300 mb-2" />
-              <span className="text-xs font-semibold text-slate-600">No media selected yet</span>
-              <span className="text-[11px] text-slate-400 mt-0.5">Upload a video or pick a sample</span>
-            </div>
-          )}
+          {/* Prominent Next Button */}
+          <button
+            onClick={onProceedToStudio}
+            className="w-full py-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
+          >
+            <span>Next: Place Allmax Product</span>
+            <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };

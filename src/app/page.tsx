@@ -60,30 +60,11 @@ export default function HomePage() {
       <main className="flex-1 px-3 sm:px-6 max-w-6xl mx-auto w-full pb-20 sm:pb-24">
         {/* Step 1: Media Capture or Upload */}
         {currentStep === 1 && (
-          <div className="space-y-4 sm:space-y-6">
-            <MediaCaptureStep
-              selectedMedia={selectedMedia}
-              onMediaSelected={handleMediaSelected}
-            />
-
-            {/* Bottom floating button when media is selected */}
-            {selectedMedia && (
-              <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-md border border-slate-200 p-2 sm:p-2.5 rounded-2xl shadow-xl flex items-center space-x-2.5 max-w-md w-[92%] sm:w-auto safe-bottom">
-                <div className="hidden sm:flex items-center space-x-1.5 text-xs text-slate-600 pl-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="font-bold truncate max-w-[150px]">{selectedMedia.name}</span>
-                </div>
-
-                <button
-                  onClick={handleProceedToStudio}
-                  className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 sm:px-6 py-3 sm:py-2.5 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-orange-500/20 transition-all active:scale-95"
-                >
-                  <span>Continue to Product Studio</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
+          <MediaCaptureStep
+            selectedMedia={selectedMedia}
+            onMediaSelected={handleMediaSelected}
+            onProceedToStudio={handleProceedToStudio}
+          />
         )}
 
         {/* Step 2: Product Overlay Studio */}
