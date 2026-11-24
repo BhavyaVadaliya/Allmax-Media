@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ExternalLink, RotateCcw } from 'lucide-react';
+import { ExternalLink, RotateCcw, Smartphone } from 'lucide-react';
 
 interface NavbarProps {
   currentStep: 1 | 2 | 3;
@@ -9,6 +9,7 @@ interface NavbarProps {
   canNavigateToStep2: boolean;
   canNavigateToStep3: boolean;
   onReset: () => void;
+  onOpenMobileModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -17,6 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   canNavigateToStep2,
   canNavigateToStep3,
   onReset,
+  onOpenMobileModal,
 }) => {
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
@@ -74,13 +76,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Right Links */}
-          <div className="flex items-center space-x-3">
+          {/* Right Links & Mobile App Button */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <button
+              onClick={onOpenMobileModal}
+              className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#FF4800] border border-orange-200 text-xs font-bold transition-all shadow-sm active:scale-95"
+              title="Download Android APK"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-[#FF4800]" />
+              <span className="hidden sm:inline">Mobile App (APK)</span>
+              <span className="sm:hidden">App</span>
+            </button>
+
             <a
               href="https://www.allmaxnutrition.com/?srsltid=AYCX9vI7dJ-kF5Gs2UXtTL8axML4QqHT9jfeXM7gU0BOYkLst3aAloCP"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center space-x-1 text-xs text-slate-600 hover:text-slate-900 font-medium"
+              className="hidden md:flex items-center space-x-1 text-xs text-slate-600 hover:text-slate-900 font-medium"
             >
               <span>allmaxnutrition.com</span>
               <ExternalLink className="w-3 h-3 text-slate-400" />
@@ -92,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-medium text-slate-700 transition-colors"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden md:inline">Start Over</span>
+                <span className="hidden lg:inline">Start Over</span>
               </button>
             )}
           </div>

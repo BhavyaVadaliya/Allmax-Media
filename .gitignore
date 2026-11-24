@@ -9,3 +9,5 @@ yarn-error.log*
 .env*.local
 test_output.mp4
 test_render.ps1
+android/build/
+

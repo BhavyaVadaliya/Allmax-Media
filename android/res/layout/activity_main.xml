@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+    <!-- Top Native Minimal Utility Bar -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="#FFFFFF"
+        android:elevation="2dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="14dp"
+        android:paddingEnd="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ALLMAX STUDIO"
+            android:textColor="#0F172A"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
+
+        <TextView
+            android:id="@+id/tvServerBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#F1F5F9"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:text="Live Sync"
+            android:textColor="#059669"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="10dp" />
+
+        <ImageButton
+            android:id="@+id/btnRefresh"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/refresh"
+            android:src="@drawable/ic_refresh"
+            android:tint="#0F172A"
+            android:scaleType="centerInside"
+            android:layout_marginEnd="4dp" />
+
+        <ImageButton
+            android:id="@+id/btnSettings"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Server Settings"
+            android:src="@drawable/ic_gear"
+            android:tint="#0F172A"
+            android:scaleType="centerInside" />
+    </LinearLayout>
+
+    <!-- Top Loading Progress Line -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:layout_below="@id/topBar"
+        android:indeterminate="false"
+        android:max="100"
+        android:progressDrawable="@android:drawable/progress_horizontal"
+        android:visibility="gone" />
+
+    <!-- Main Live Web Content -->
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/topBar" />
+
+    <!-- Offline / Reconnection Fallback Overlay -->
+    <LinearLayout
+        android:id="@+id/errorView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/topBar"
+        android:background="#F8FAFC"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="28dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ALLMAX STUDIO"
+            android:textColor="#FF4800"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Server Not Detected"
+            android:textColor="#0F172A"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvErrorUrl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Target: http://192.168.1.16:3000"
+            android:textColor="#64748B"
+            android:textSize="13sp"
+            android:gravity="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="Ensure your computer and phone are connected to the same Wi-Fi, and Next.js is running."
+            android:textColor="#475569"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:lineSpacingExtra="3dp" />
+
+        <Button
+            android:id="@+id/btnRetry"
+            android:layout_width="220dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="26dp"
+            android:background="#FF4800"
+            android:text="Retry Connection"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnChangeUrl"
+            android:layout_width="220dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
+            android:background="#E2E8F0"
+            android:text="Change Server IP"
+            android:textColor="#0F172A"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+</RelativeLayout>
