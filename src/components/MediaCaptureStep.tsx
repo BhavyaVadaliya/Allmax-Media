@@ -4,10 +4,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Upload,
   Camera,
-  Video,
   Square,
   AlertCircle,
-  FileVideo,
   ArrowRight,
   Check,
   Sparkles,
@@ -167,7 +165,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto space-y-4 py-2 px-1">
+    <div className="w-full max-w-xl mx-auto space-y-3.5 py-1 px-1">
       {/* Hidden native file input */}
       <input
         ref={fileInputRef}
@@ -178,18 +176,20 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
       />
 
       {/* Screen Title */}
-      <div className="text-center space-y-1">
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-          Step 1: Choose Your Video
+      <div className="text-center space-y-0.5">
+        <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+          {selectedMedia ? 'Workout Media Selected' : 'Step 1: Choose Your Video or Photo'}
         </h1>
         <p className="text-xs text-slate-500">
-          Select workout footage to place the Allmax product onto
+          {selectedMedia
+            ? 'Preview your media below or tap Replace to change it'
+            : 'Select footage to place the Allmax Nutrition product onto'}
         </p>
       </div>
 
       {/* Camera Live Viewfinder Modal */}
       {showCamera && (
-        <div className="bg-white border-2 border-slate-900 rounded-2xl p-4 space-y-3 shadow-xl animate-fade-in">
+        <div className="bg-white border-2 border-slate-900 rounded-2xl p-3.5 space-y-3 shadow-xl animate-fade-in">
           <div className="flex items-center justify-between text-xs font-bold text-slate-800">
             <span className="flex items-center space-x-2">
               <span className={`w-2.5 h-2.5 rounded-full ${isRecording ? 'bg-red-500 animate-ping' : 'bg-emerald-500'}`} />
@@ -197,13 +197,13 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
             </span>
             <button
               onClick={stopCameraStream}
-              className="text-xs text-slate-500 hover:text-slate-800 underline"
+              className="text-xs text-slate-500 hover:text-slate-800 font-bold underline"
             >
               Cancel
             </button>
           </div>
 
-          <div className="relative aspect-[9/16] max-h-[300px] mx-auto bg-slate-950 rounded-xl overflow-hidden">
+          <div className="relative aspect-[9/16] max-h-[300px] mx-auto bg-slate-950 rounded-xl overflow-hidden shadow-inner">
             <video
               ref={liveCameraRef}
               autoPlay
@@ -242,49 +242,49 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
         </div>
       )}
 
-      {/* Main Choice Cards: If NO media selected yet */}
+      {/* STATE 1: SELECTION OPTIONS (Shown ONLY when NO media is selected) */}
       {!selectedMedia && !showCamera && (
-        <div className="space-y-3.5">
-          {/* Big Action Button 1: Upload from Phone */}
+        <div className="space-y-3 animate-fade-in">
+          {/* Big Option 1: Upload from Phone */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full p-4 sm:p-5 rounded-2xl bg-white border-2 border-slate-200 hover:border-[#FF4800] text-left flex items-center space-x-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
+            className="w-full p-4 rounded-2xl bg-white border-2 border-slate-200 hover:border-[#FF4800] text-left flex items-center space-x-3.5 shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
           >
             <div className="w-12 h-12 rounded-xl bg-orange-100 text-[#FF4800] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
               <Upload className="w-6 h-6 stroke-[2.5]" />
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-base font-extrabold text-slate-900 block">
-                Choose Video from Phone
+              <span className="text-sm sm:text-base font-black text-slate-900 block">
+                Choose Video or Photo from Phone
               </span>
               <span className="text-xs text-slate-500 block mt-0.5">
-                Pick from gallery or files (MP4, MOV, WebM)
+                Select from your phone gallery or files (MP4, MOV, JPG, PNG)
               </span>
             </div>
             <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#FF4800] group-hover:translate-x-0.5 transition-all shrink-0" />
           </button>
 
-          {/* Big Action Button 2: Camera Record */}
+          {/* Big Option 2: Record with Camera */}
           <button
             onClick={startCamera}
-            className="w-full p-4 sm:p-5 rounded-2xl bg-white border-2 border-slate-200 hover:border-[#FF4800] text-left flex items-center space-x-4 shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
+            className="w-full p-4 rounded-2xl bg-white border-2 border-slate-200 hover:border-[#FF4800] text-left flex items-center space-x-3.5 shadow-sm hover:shadow-md transition-all active:scale-[0.98] group"
           >
             <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
               <Camera className="w-6 h-6 stroke-[2.5]" />
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-base font-extrabold text-slate-900 block">
+              <span className="text-sm sm:text-base font-black text-slate-900 block">
                 Record with Camera
               </span>
               <span className="text-xs text-slate-500 block mt-0.5">
-                Take a quick live workout video right now
+                Record live gym footage right now
               </span>
             </div>
             <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-[#FF4800] group-hover:translate-x-0.5 transition-all shrink-0" />
           </button>
 
-          {/* Instant 1-Tap Gym Sample Shortcuts */}
-          <div className="pt-2">
+          {/* Quick Gym Samples */}
+          <div className="pt-1.5">
             <div className="flex items-center justify-between mb-2 px-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5 text-[#FF4800]" />
@@ -292,7 +292,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2">
               {SAMPLE_CREATOR_MEDIA.slice(0, 2).map((sample) => (
                 <button
                   key={sample.id}
@@ -306,10 +306,10 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
                     className="w-11 h-11 rounded-lg object-cover shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <span className="text-xs font-bold text-slate-900 truncate block">
+                    <span className="text-xs font-black text-slate-900 truncate block">
                       {sample.name}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold block">
+                    <span className="text-[10px] text-slate-400 font-bold block">
                       {sample.duration}s Video
                     </span>
                   </div>
@@ -320,28 +320,31 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
         </div>
       )}
 
-      {/* When Media IS Selected: Compact Confirmation & Primary Proceed Button */}
+      {/* STATE 2: MEDIA IS SELECTED (All selection options REMOVED, Only Video/Image Shown with Replace Option) */}
       {selectedMedia && !showCamera && (
-        <div className="space-y-4 animate-fade-in">
-          {/* Selected Video Preview Card */}
+        <div className="space-y-3.5 animate-fade-in">
+          {/* Selected Media View Card */}
           <div className="bg-white border-2 border-emerald-500/40 rounded-2xl p-3 sm:p-4 shadow-md space-y-3">
+            {/* Top Bar with Ready Indicator & REPLACE Button */}
             <div className="flex items-center justify-between">
-              <span className="inline-flex items-center space-x-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              <span className="inline-flex items-center space-x-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
-                <span>Video Loaded &amp; Ready</span>
+                <span>Ready for Studio</span>
               </span>
 
+              {/* REPLACE OPTION: Lets user replace the video/photo immediately */}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xs font-bold text-slate-500 hover:text-[#FF4800] flex items-center space-x-1"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#FF4800] border border-orange-200 text-xs font-extrabold transition-all active:scale-95"
+                title="Replace with another video or photo"
               >
-                <RefreshCw className="w-3 h-3" />
-                <span>Change</span>
+                <RefreshCw className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Replace Video / Photo</span>
               </button>
             </div>
 
-            {/* Compact Video Viewport (Clean, Not Oversized) */}
-            <div className="relative aspect-[9/16] max-h-[260px] mx-auto bg-slate-950 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+            {/* The Selected Video or Image (Shown instead of selection options) */}
+            <div className="relative aspect-[9/16] h-[280px] sm:h-[340px] mx-auto bg-slate-950 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
               {selectedMedia.type === 'video' ? (
                 <video
                   key={selectedMedia.url}
@@ -357,18 +360,28 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={selectedMedia.url}
-                  alt="Preview"
+                  alt="Selected Media"
                   className="w-full h-full object-cover"
                 />
               )}
             </div>
 
-            <div className="text-center text-xs text-slate-600 font-medium truncate px-2">
-              {selectedMedia.name}
+            {/* Media Metadata & Replace shortcut row */}
+            <div className="flex items-center justify-between text-xs text-slate-500 px-1 pt-0.5">
+              <span className="font-semibold text-slate-800 truncate max-w-[200px]">
+                {selectedMedia.name}
+              </span>
+
+              <button
+                onClick={() => startCamera()}
+                className="text-[11px] font-bold text-slate-500 hover:text-[#FF4800] underline"
+              >
+                or re-record camera
+              </button>
             </div>
           </div>
 
-          {/* Prominent Next Button */}
+          {/* Primary Action Button: Proceed to Product Studio */}
           <button
             onClick={onProceedToStudio}
             className="w-full py-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"

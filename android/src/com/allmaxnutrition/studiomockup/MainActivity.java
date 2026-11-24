@@ -30,7 +30,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,9 +49,6 @@ public class MainActivity extends Activity {
     private ProgressBar progressBar;
     private View errorView;
     private TextView tvErrorUrl;
-    private TextView tvServerBadge;
-    private ImageButton btnRefresh;
-    private ImageButton btnSettings;
     private Button btnConnectVercel;
     private Button btnRetry;
     private Button btnChangeUrl;
@@ -78,29 +74,9 @@ public class MainActivity extends Activity {
         progressBar = findViewById(R.id.progressBar);
         errorView = findViewById(R.id.errorView);
         tvErrorUrl = findViewById(R.id.tvErrorUrl);
-        tvServerBadge = findViewById(R.id.tvServerBadge);
-        btnRefresh = findViewById(R.id.btnRefresh);
-        btnSettings = findViewById(R.id.btnSettings);
         btnConnectVercel = findViewById(R.id.btnConnectVercel);
         btnRetry = findViewById(R.id.btnRetry);
         btnChangeUrl = findViewById(R.id.btnChangeUrl);
-
-        btnRefresh.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (webView != null) {
-                    webView.reload();
-                    Toast.makeText(MainActivity.this, "Reloading latest code...", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        btnSettings.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showServerUrlDialog();
-            }
-        });
 
         btnConnectVercel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -128,7 +104,6 @@ public class MainActivity extends Activity {
 
     private String getServerUrl() {
         String url = prefs.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL);
-        // Auto-migrate from old local development IPs to live Vercel URL
         if (url == null || url.trim().isEmpty() || url.contains("192.168.1.16") || url.contains("10.0.2.2") || url.contains("localhost")) {
             url = DEFAULT_SERVER_URL;
             prefs.edit().putString(KEY_SERVER_URL, url).apply();
@@ -151,8 +126,6 @@ public class MainActivity extends Activity {
         String url = getServerUrl();
         errorView.setVisibility(View.GONE);
         webView.setVisibility(View.VISIBLE);
-        tvServerBadge.setText("Connecting...");
-        tvServerBadge.setTextColor(0xFFD97706);
         webView.loadUrl(url);
     }
 
@@ -166,8 +139,6 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
-
-        // Standard caching with support for live reload
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -244,12 +215,10 @@ public class MainActivity extends Activity {
                 String currentServer = getServerUrl();
                 Uri serverUri = Uri.parse(currentServer);
 
-                // Keep same host or path inside WebView
                 if (host != null && serverUri.getHost() != null && host.equalsIgnoreCase(serverUri.getHost())) {
                     return false;
                 }
 
-                // If external (like TikTok, Instagram, AllmaxNutrition website), open in device default browser or app
                 if (url.startsWith("http://") || url.startsWith("https://")) {
                     try {
                         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -270,21 +239,12 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                tvServerBadge.setText("Live Cloud");
-                tvServerBadge.setTextColor(0xFF059669);
-            }
-
-            @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
                     webView.setVisibility(View.GONE);
                     errorView.setVisibility(View.VISIBLE);
                     tvErrorUrl.setText("Target: " + getServerUrl());
-                    tvServerBadge.setText("Disconnected");
-                    tvServerBadge.setTextColor(0xFFDC2626);
                 }
             }
         });

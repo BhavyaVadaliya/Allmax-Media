@@ -4,90 +4,28 @@
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
-    <!-- Top Native Minimal Utility Bar -->
-    <LinearLayout
-        android:id="@+id/topBar"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:background="#FFFFFF"
-        android:elevation="2dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="14dp"
-        android:paddingEnd="12dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="ALLMAX STUDIO"
-            android:textColor="#0F172A"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.08" />
-
-        <TextView
-            android:id="@+id/tvServerBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#F1F5F9"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
-            android:text="Live Sync"
-            android:textColor="#059669"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:layout_marginEnd="10dp" />
-
-        <ImageButton
-            android:id="@+id/btnRefresh"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/refresh"
-            android:src="@drawable/ic_refresh"
-            android:tint="#0F172A"
-            android:scaleType="centerInside"
-            android:layout_marginEnd="4dp" />
-
-        <ImageButton
-            android:id="@+id/btnSettings"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Server Settings"
-            android:src="@drawable/ic_gear"
-            android:tint="#0F172A"
-            android:scaleType="centerInside" />
-    </LinearLayout>
-
     <!-- Top Loading Progress Line -->
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="3dp"
-        android:layout_below="@id/topBar"
         android:indeterminate="false"
         android:max="100"
         android:progressDrawable="@android:drawable/progress_horizontal"
         android:visibility="gone" />
 
-    <!-- Main Live Web Content -->
+    <!-- Main Live Web Content (Fullscreen - No Duplicate Native Header) -->
     <WebView
         android:id="@+id/webView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/topBar" />
+        android:layout_height="match_parent" />
 
     <!-- Offline / Reconnection Fallback Overlay -->
     <LinearLayout
         android:id="@+id/errorView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/topBar"
         android:background="#F8FAFC"
         android:gravity="center"
         android:orientation="vertical"
@@ -126,11 +64,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="Ensure your phone has an active internet connection or switch to the Live Vercel cloud server."
+            android:text="Ensure your phone has an active internet connection."
             android:textColor="#475569"
             android:textSize="13sp"
-            android:gravity="center"
-            android:lineSpacingExtra="3dp" />
+            android:gravity="center" />
 
         <Button
             android:id="@+id/btnConnectVercel"
@@ -159,7 +96,7 @@
             android:layout_height="44dp"
             android:layout_marginTop="10dp"
             android:background="#F1F5F9"
-            android:text="Change Server IP / URL"
+            android:text="Change Server URL"
             android:textColor="#475569"
             android:textSize="13sp" />
     </LinearLayout>
