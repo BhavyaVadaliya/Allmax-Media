@@ -86,6 +86,7 @@ export const ProductOverlayStudio = forwardRef<
 
   const [isRendering, setIsRendering] = useState<boolean>(false);
   const [renderProgress, setRenderProgress] = useState<number>(0);
+  const maxProgressRef = useRef<number>(0);
   const [renderMessage, setRenderMessage] = useState<string>(
     'Rendering frames with client-side video compositor...'
   );
@@ -234,6 +235,7 @@ export const ProductOverlayStudio = forwardRef<
   const handleGenerateMockup = async () => {
     if (isRendering) return;
     setIsRendering(true);
+    maxProgressRef.current = 10;
     setRenderProgress(10);
     setRenderMessage('Rendering frames with client-side video compositor...');
 
@@ -276,7 +278,10 @@ export const ProductOverlayStudio = forwardRef<
         config,
         aspectRatio: '9:16',
         onProgress: (percent, msg) => {
-          setRenderProgress(percent);
+          if (percent >= maxProgressRef.current) {
+            maxProgressRef.current = percent;
+            setRenderProgress(percent);
+          }
           if (msg) setRenderMessage(msg);
         },
       });

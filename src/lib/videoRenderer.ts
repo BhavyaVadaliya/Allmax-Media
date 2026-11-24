@@ -27,6 +27,15 @@ export async function renderMockupMedia(options: RenderOptions): Promise<RenderR
   // Preload product SVG image for canvas drawing
   const productImage = await loadSvgImage(product.svgGraphic);
 
+  // Wrap onProgress in a strictly monotonic updater so progress NEVER jumps backwards
+  let currentMaxPercent = 0;
+  const safeProgress = (percent: number, stepMessage: string) => {
+    if (percent >= currentMaxPercent) {
+      currentMaxPercent = percent;
+      onProgress?.(percent, stepMessage);
+    }
+  };
+
   if (mediaType === 'image') {
     const result = await renderImageMockup({
       imgElement: mediaElement as HTMLImageElement,
@@ -35,7 +44,7 @@ export async function renderMockupMedia(options: RenderOptions): Promise<RenderR
       config,
       width: targetWidth,
       height: targetHeight,
-      onProgress,
+      onProgress: safeProgress,
     });
     return {
       ...result,
@@ -44,41 +53,10 @@ export async function renderMockupMedia(options: RenderOptions): Promise<RenderR
       aspectRatio,
     };
   } else {
-    // Attempt Studio FFmpeg API first for genuine broadcast MP4
-    try {
-      onProgress?.(15, 'Generating transparent Allmax overlay layer...');
-      const overlayDataUrl = await createOverlayDataUrl({
-        productImage,
-        product,
-        config,
-        width: targetWidth,
-        height: targetHeight,
-      });
+    // Client-side Canvas + MediaRecorder Compositor (Smooth, Instant, Monotonic)
+    safeProgress(15, 'Preparing Allmax supplement layer...');
+    safeProgress(25, 'Rendering frames with client-side video compositor...');
 
-      onProgress?.(35, 'Encoding high-definition H.264 MP4 video...');
-      const ffmpegResult = await tryServerFfmpegRender({
-        mediaItem,
-        mediaElement: mediaElement as HTMLVideoElement,
-        overlayDataUrl,
-        product,
-        onProgress,
-      });
-
-      if (ffmpegResult) {
-        onProgress?.(100, 'Allmax video mockup generated successfully!');
-        return {
-          ...ffmpegResult,
-          originalMedia: mediaItem,
-          config,
-          aspectRatio,
-        };
-      }
-    } catch (apiErr) {
-      console.warn('Server FFmpeg render encountered issue, using client-side recorder engine:', apiErr);
-    }
-
-    // Client-side Canvas + MediaRecorder fallback
-    onProgress?.(40, 'Rendering frames with client-side video compositor...');
     const clientResult = await renderVideoMockupClient({
       videoElement: mediaElement as HTMLVideoElement,
       productImage,
@@ -86,8 +64,10 @@ export async function renderMockupMedia(options: RenderOptions): Promise<RenderR
       config,
       width: targetWidth,
       height: targetHeight,
-      onProgress,
+      onProgress: safeProgress,
     });
+
+    safeProgress(100, 'Allmax video mockup generated successfully!');
 
     return {
       ...clientResult,
@@ -516,6 +496,7 @@ async function renderVideoMockupClient({
 
     recorder.onstop = () => {
       cleanup();
+      onProgress?.(98, 'Finalizing high-definition video file...');
       const blob = new Blob(chunks, { type: mimeType });
       const url = URL.createObjectURL(blob);
       const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
@@ -556,8 +537,8 @@ async function renderVideoMockupClient({
           drawOverlayElements(ctx, productImage, product, config, width, height);
 
           const progressPercent = Math.min(
-            99,
-            Math.max(5, Math.round((videoElement.currentTime / duration) * 95))
+            95,
+            Math.max(25, Math.round(25 + (videoElement.currentTime / duration) * 70))
           );
           onProgress?.(
             progressPercent,
