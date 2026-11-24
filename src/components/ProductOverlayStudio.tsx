@@ -18,7 +18,8 @@ import {
   Monitor,
   Loader2,
   Check,
-  ExternalLink,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 
 interface ProductOverlayStudioProps {
@@ -55,9 +56,9 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
   });
 
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const dragStartRef = useRef<{ mouseX: number; mouseY: number; startX: number; startY: number }>({
-    mouseX: 0,
-    mouseY: 0,
+  const dragStartRef = useRef<{ clientX: number; clientY: number; startX: number; startY: number }>({
+    clientX: 0,
+    clientY: 0,
     startX: 0,
     startY: 0,
   });
@@ -111,23 +112,37 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
     }));
   };
 
+  // Mouse Drag Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
     dragStartRef.current = {
-      mouseX: e.clientX,
-      mouseY: e.clientY,
+      clientX: e.clientX,
+      clientY: e.clientY,
       startX: config.x,
       startY: config.y,
     };
   };
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging || !containerRef.current) return;
+  // Touch Drag Handlers (Mobile Support)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setIsDragging(true);
+    dragStartRef.current = {
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      startX: config.x,
+      startY: config.y,
+    };
+  };
+
+  const updateCoordinates = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const deltaX = ((e.clientX - dragStartRef.current.mouseX) / rect.width) * 100;
-      const deltaY = ((e.clientY - dragStartRef.current.mouseY) / rect.height) * 100;
+      const deltaX = ((clientX - dragStartRef.current.clientX) / rect.width) * 100;
+      const deltaY = ((clientY - dragStartRef.current.clientY) / rect.height) * 100;
       const newX = Math.max(12, Math.min(88, dragStartRef.current.startX + deltaX));
       const newY = Math.max(12, Math.min(88, dragStartRef.current.startY + deltaY));
       setConfig((prev) => ({
@@ -136,7 +151,25 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
         y: Math.round(newY),
       }));
     },
-    [isDragging]
+    []
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
+      updateCoordinates(e.clientX, e.clientY);
+    },
+    [isDragging, updateCoordinates]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      e.preventDefault(); // Prevent rubber-band scrolling while dragging overlay
+      const touch = e.touches[0];
+      updateCoordinates(touch.clientX, touch.clientY);
+    },
+    [isDragging, updateCoordinates]
   );
 
   const handleDragEnd = useCallback(() => {
@@ -147,15 +180,24 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleDragEnd);
+      window.addEventListener('touchcancel', handleDragEnd);
     } else {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleDragEnd);
+      window.removeEventListener('touchcancel', handleDragEnd);
     }
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleDragEnd);
+      window.removeEventListener('touchcancel', handleDragEnd);
     };
-  }, [isDragging, handleMouseMove, handleDragEnd]);
+  }, [isDragging, handleMouseMove, handleTouchMove, handleDragEnd]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -225,34 +267,35 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6 py-4">
+    <div className="w-full max-w-6xl mx-auto space-y-4 sm:space-y-6 py-2 sm:py-4 pb-28 lg:pb-8">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-200 pb-4 gap-3">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-3 gap-2">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-snug">
             Place Allmax Product in Video
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Pick a supplement and place it anywhere on your video.
+          <p className="text-xs sm:text-sm text-slate-500 hidden sm:block">
+            Touch or drag the supplement directly on the video screen.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center space-x-2 shrink-0">
           <button
             onClick={onBackToMedia}
-            className="px-3.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors"
+            className="px-2.5 sm:px-3.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600 transition-colors"
           >
-            ← Change Video
+            ← <span className="hidden sm:inline">Change</span> Video
           </button>
+          
           <button
             onClick={handleGenerateMockup}
             disabled={isRendering}
-            className="flex items-center space-x-2 px-6 py-2 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 transition-all active:scale-95 disabled:opacity-50"
+            className="hidden lg:flex items-center space-x-2 px-5 py-2 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 transition-all active:scale-95 disabled:opacity-50"
           >
             {isRendering ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Creating Video ({renderProgress}%)...</span>
+                <span>Creating ({renderProgress}%)...</span>
               </>
             ) : (
               <span>Create Mockup Video →</span>
@@ -261,45 +304,46 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
         </div>
       </div>
 
-      {/* Clean 2-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Interactive Video Stage (6 cols) */}
-        <div className="lg:col-span-6 space-y-3">
-          <div className="flex items-center justify-between bg-white border border-slate-200 px-3 py-2 rounded-xl shadow-sm text-xs font-medium">
-            <span className="text-slate-500">Video Format:</span>
+      {/* Main Studio Grid: Mobile Optimized Vertical Flow / Desktop 2-Column */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-start">
+        {/* Stage Column (Left on Desktop, Top on Mobile) */}
+        <div className="lg:col-span-6 space-y-2.5">
+          {/* Format Switcher */}
+          <div className="flex items-center justify-between bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm text-xs font-medium">
+            <span className="text-slate-500 text-[11px] sm:text-xs">Ratio:</span>
             <div className="flex items-center space-x-1">
               <button
                 onClick={() => setAspectRatio('9:16')}
-                className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg transition-all ${
+                className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                   aspectRatio === '9:16'
                     ? 'bg-[#FF4800] text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Smartphone className="w-3.5 h-3.5" />
-                <span>9:16 (TikTok & Reels)</span>
+                <Smartphone className="w-3 h-3" />
+                <span>9:16 (Vertical)</span>
               </button>
               <button
                 onClick={() => setAspectRatio('16:9')}
-                className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg transition-all ${
+                className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                   aspectRatio === '16:9'
                     ? 'bg-[#FF4800] text-white shadow-sm'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Monitor className="w-3.5 h-3.5" />
+                <Monitor className="w-3 h-3" />
                 <span>16:9</span>
               </button>
             </div>
           </div>
 
-          {/* Viewport Canvas */}
+          {/* Interactive Canvas Stage */}
           <div
             ref={containerRef}
-            className={`relative mx-auto bg-slate-950 rounded-2xl overflow-hidden shadow-xl select-none cursor-grab active:cursor-grabbing ${
+            className={`relative mx-auto bg-slate-950 rounded-2xl overflow-hidden shadow-xl select-none cursor-grab active:cursor-grabbing touch-none ${
               aspectRatio === '9:16'
-                ? 'aspect-[9/16] max-h-[540px]'
-                : 'aspect-[16/9] w-full'
+                ? 'aspect-[9/16] h-[34vh] max-h-[340px] sm:h-auto sm:max-h-[500px]'
+                : 'aspect-[16/9] w-full max-h-[320px]'
             }`}
           >
             {media.type === 'video' ? (
@@ -322,9 +366,10 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
               />
             )}
 
-            {/* Draggable Product Overlay */}
+            {/* Draggable & Touch-enabled Product Overlay */}
             <div
               onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
               style={{
                 position: 'absolute',
                 left: `${config.x}%`,
@@ -333,16 +378,17 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
                 width: `${config.scale * 100}%`,
                 opacity: config.opacity,
                 zIndex: 20,
+                touchAction: 'none',
               }}
-              className="group cursor-grab active:cursor-grabbing"
+              className="cursor-grab active:cursor-grabbing select-none"
             >
               <div
                 className={`relative flex flex-col items-center justify-center ${
-                  config.hasDropShadow ? 'filter drop-shadow-[0_16px_20px_rgba(0,0,0,0.7)]' : ''
+                  config.hasDropShadow ? 'filter drop-shadow-[0_14px_18px_rgba(0,0,0,0.7)]' : ''
                 }`}
               >
-                {/* Visual outline on hover */}
-                <div className="absolute -inset-1 border-2 border-white/60 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                {/* Visual pulse boundary */}
+                <div className="absolute -inset-1.5 border-2 border-white/70 rounded-xl opacity-60 pointer-events-none" />
 
                 {/* Tub SVG Graphic */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -353,58 +399,66 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
                   draggable={false}
                 />
 
-                {/* Badge Overlay */}
+                {/* Sponsor Badge Overlay */}
                 {config.showBadge && config.badgeText && (
-                  <div className="mt-1 px-3 py-1 rounded-full bg-slate-900 text-white text-[10px] font-extrabold uppercase shadow-lg border border-amber-400 whitespace-nowrap">
+                  <div className="mt-1 px-2.5 py-0.5 rounded-full bg-slate-900/95 text-white text-[9px] font-extrabold uppercase shadow-lg border border-amber-400 whitespace-nowrap">
                     {config.badgeText}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Play/Pause Button */}
+            {/* Video Play/Pause toggle */}
             {media.type === 'video' && (
               <button
                 onClick={togglePlay}
-                className="absolute bottom-3 left-3 z-30 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all backdrop-blur-sm"
+                className="absolute bottom-2.5 left-2.5 z-30 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all backdrop-blur-sm"
               >
                 {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
               </button>
             )}
 
-            <div className="absolute bottom-3 right-3 z-30 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded text-[11px] text-white font-medium pointer-events-none">
-              Drag anywhere to place
+            {/* Hint pill */}
+            <div className="absolute bottom-2.5 right-2.5 z-30 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-white font-medium pointer-events-none">
+              👆 Touch &amp; Drag
             </div>
           </div>
 
-          <p className="text-xs text-center text-slate-500 flex items-center justify-center space-x-1">
-            <Move className="w-3.5 h-3.5 text-[#FF4800]" />
-            <span>Click and drag the supplement directly on the video screen</span>
+          <p className="text-[11px] text-center text-slate-500 flex items-center justify-center space-x-1">
+            <Move className="w-3 h-3 text-[#FF4800]" />
+            <span>Drag supplement anywhere on screen with finger or mouse</span>
           </p>
         </div>
 
-        {/* Right Column: Simple Controls (6 cols) */}
-        <div className="lg:col-span-6 space-y-5">
-          {/* 1. Choose Product */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-              1. Choose Allmax Product
-            </h3>
+        {/* Controls Column (Right on Desktop, Below Preview on Mobile) */}
+        <div className="lg:col-span-6 space-y-4">
+          {/* 1. Choose Product (Horizontal Carousel on Mobile, Grid on Desktop) */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+                <span>1. Select Allmax Product</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-[#FF4800] rounded font-bold">
+                  {selectedProduct.name}
+                </span>
+              </h3>
+              <span className="text-[10px] text-slate-400 font-medium">Swipe to choose</span>
+            </div>
 
-            <div className="grid grid-cols-2 gap-2.5 max-h-[260px] overflow-y-auto pr-1">
-              {ALLMAX_PRODUCTS.slice(0, 6).map((prod) => {
+            {/* Responsive Product Picker: Swipeable on Mobile, Grid on Desktop */}
+            <div className="flex lg:grid lg:grid-cols-2 gap-2.5 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+              {ALLMAX_PRODUCTS.map((prod) => {
                 const isSelected = selectedProduct.id === prod.id;
                 return (
                   <button
                     key={prod.id}
                     onClick={() => handleSelectProduct(prod)}
-                    className={`p-2.5 rounded-xl border text-left flex items-center space-x-2.5 transition-all ${
+                    className={`min-w-[145px] sm:min-w-[160px] lg:min-w-0 p-2.5 rounded-xl border text-left flex items-center space-x-2.5 transition-all shrink-0 snap-start active:scale-95 ${
                       isSelected
-                        ? 'border-[#FF4800] bg-orange-50/60 ring-2 ring-[#FF4800]/20 shadow-sm'
+                        ? 'border-[#FF4800] bg-orange-50/70 ring-2 ring-[#FF4800]/20 shadow-sm'
                         : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    <div className="w-10 h-12 flex-shrink-0 bg-slate-100 rounded-lg p-1 flex items-center justify-center">
+                    <div className="w-9 h-11 sm:w-10 sm:h-12 flex-shrink-0 bg-slate-100 rounded-lg p-1 flex items-center justify-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={prod.svgGraphic}
@@ -417,7 +471,7 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
                         <span className="text-xs font-bold text-slate-900 truncate block">
                           {prod.name}
                         </span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#FF4800]" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#FF4800] shrink-0 ml-1" />}
                       </div>
                       <span className="text-[10px] text-slate-500 truncate block">
                         {prod.heroBadge}
@@ -430,15 +484,15 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
           </div>
 
           {/* 2. Position Snaps */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-2.5">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-              2. Position on Video
+              2. Quick Position Presets
             </h3>
 
             <div className="grid grid-cols-3 gap-2 text-xs font-semibold">
               <button
                 onClick={() => applyPreset('bottom-right')}
-                className={`py-2 px-3 rounded-xl border transition-all text-center ${
+                className={`py-2 px-2 rounded-xl border transition-all text-center active:scale-95 text-[11px] sm:text-xs ${
                   config.preset === 'bottom-right'
                     ? 'border-[#FF4800] bg-orange-500 text-white shadow-sm'
                     : 'border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -448,7 +502,7 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
               </button>
               <button
                 onClick={() => applyPreset('bottom-left')}
-                className={`py-2 px-3 rounded-xl border transition-all text-center ${
+                className={`py-2 px-2 rounded-xl border transition-all text-center active:scale-95 text-[11px] sm:text-xs ${
                   config.preset === 'bottom-left'
                     ? 'border-[#FF4800] bg-orange-500 text-white shadow-sm'
                     : 'border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -458,7 +512,7 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
               </button>
               <button
                 onClick={() => applyPreset('center')}
-                className={`py-2 px-3 rounded-xl border transition-all text-center ${
+                className={`py-2 px-2 rounded-xl border transition-all text-center active:scale-95 text-[11px] sm:text-xs ${
                   config.preset === 'center'
                     ? 'border-[#FF4800] bg-orange-500 text-white shadow-sm'
                     : 'border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -468,7 +522,7 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
               </button>
               <button
                 onClick={() => applyPreset('top-right')}
-                className={`py-2 px-3 rounded-xl border transition-all text-center ${
+                className={`py-2 px-2 rounded-xl border transition-all text-center active:scale-95 text-[11px] sm:text-xs ${
                   config.preset === 'top-right'
                     ? 'border-[#FF4800] bg-orange-500 text-white shadow-sm'
                     : 'border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -478,7 +532,7 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
               </button>
               <button
                 onClick={() => applyPreset('top-left')}
-                className={`py-2 px-3 rounded-xl border transition-all text-center ${
+                className={`py-2 px-2 rounded-xl border transition-all text-center active:scale-95 text-[11px] sm:text-xs ${
                   config.preset === 'top-left'
                     ? 'border-[#FF4800] bg-orange-500 text-white shadow-sm'
                     : 'border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -488,7 +542,7 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
               </button>
               <button
                 onClick={() => applyPreset('floating-right')}
-                className={`py-2 px-3 rounded-xl border transition-all text-center ${
+                className={`py-2 px-2 rounded-xl border transition-all text-center active:scale-95 text-[11px] sm:text-xs ${
                   config.preset === 'floating-right'
                     ? 'border-[#FF4800] bg-orange-500 text-white shadow-sm'
                     : 'border-slate-200 text-slate-700 hover:bg-slate-50'
@@ -499,13 +553,13 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
             </div>
           </div>
 
-          {/* 3. Size & Badge */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4 text-xs">
+          {/* 3. Size & Badge Options */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3.5 text-xs">
             {/* Scale Slider */}
             <div className="space-y-1.5">
-              <div className="flex justify-between font-semibold text-slate-700">
+              <div className="flex justify-between font-bold text-slate-800">
                 <span>Product Size:</span>
-                <span className="text-[#FF4800]">{Math.round(config.scale * 100)}%</span>
+                <span className="text-[#FF4800] font-black">{Math.round(config.scale * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -516,17 +570,17 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
                 onChange={(e) =>
                   setConfig((prev) => ({ ...prev, scale: parseFloat(e.target.value) }))
                 }
-                className="w-full"
+                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#FF4800]"
               />
             </div>
 
             {/* Badge Select */}
             <div className="space-y-1.5 pt-2 border-t border-slate-100">
-              <label className="font-semibold text-slate-700 block">Sponsor Badge:</label>
+              <label className="font-bold text-slate-800 block">Sponsor Badge:</label>
               <select
                 value={config.badgeText}
                 onChange={(e) => setConfig((prev) => ({ ...prev, badgeText: e.target.value }))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 text-xs font-medium"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#FF4800]"
               >
                 {BADGE_OPTIONS.map((b) => (
                   <option key={b.id} value={b.label}>
@@ -537,11 +591,11 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
             </div>
           </div>
 
-          {/* 4. Action Button */}
+          {/* Desktop Only Action Button */}
           <button
             onClick={handleGenerateMockup}
             disabled={isRendering}
-            className="w-full py-3.5 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-extrabold text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-2"
+            className="hidden lg:flex w-full py-3.5 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-extrabold text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50 items-center justify-center space-x-2"
           >
             {isRendering ? (
               <>
@@ -553,6 +607,42 @@ export const ProductOverlayStudio: React.FC<ProductOverlayStudioProps> = ({
             )}
           </button>
         </div>
+      </div>
+
+      {/* Mobile Sticky Bottom Action Dock (Thumb-Friendly) */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl z-40 flex items-center justify-between gap-3 safe-bottom">
+        <div className="flex items-center space-x-2 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-orange-100 p-1 shrink-0 flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={selectedProduct.svgGraphic} alt="" className="max-h-full max-w-full" />
+          </div>
+          <div className="min-w-0">
+            <span className="text-xs font-extrabold text-slate-900 block truncate">
+              {selectedProduct.name}
+            </span>
+            <span className="text-[10px] text-slate-500 block truncate">
+              {Math.round(config.scale * 100)}% • {config.preset}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={handleGenerateMockup}
+          disabled={isRendering}
+          className="flex-1 max-w-[210px] py-3 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-1.5"
+        >
+          {isRendering ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>{renderProgress}%</span>
+            </>
+          ) : (
+            <>
+              <span>Create Mockup</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
