@@ -24,9 +24,11 @@ import {
   Sparkles,
   Volume2,
   VolumeX,
-  Compass,
+  Move,
+  ArrowRight,
   Layers,
-  Search,
+  ChevronLeft,
+  Check,
 } from 'lucide-react';
 
 export interface ProductOverlayStudioRef {
@@ -40,18 +42,14 @@ interface ProductOverlayStudioProps {
   onRenderingChange?: (isRendering: boolean, progress: number) => void;
 }
 
-const PRESET_ORDER: OverlayPositionPreset[] = [
-  'bottom-right',
-  'bottom-left',
-  'top-right',
-  'center',
-];
+const CATEGORIES = ['All', 'Protein', 'Pre-Workout', 'Creatine & Performance'];
 
 export const ProductOverlayStudio = forwardRef<
   ProductOverlayStudioRef,
   ProductOverlayStudioProps
 >(({ media, onMockupGenerated, onBackToMedia, onRenderingChange }, ref) => {
   const [selectedProduct, setSelectedProduct] = useState<AllmaxProduct>(ALLMAX_PRODUCTS[0]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -59,9 +57,9 @@ export const ProductOverlayStudio = forwardRef<
 
   const [config, setConfig] = useState<OverlayConfig>({
     productId: ALLMAX_PRODUCTS[0].id,
-    x: 76,
+    x: 75,
     y: 75,
-    scale: 0.40,
+    scale: 0.32,
     rotation: 0,
     opacity: 1.0,
     hasDropShadow: true,
@@ -101,15 +99,15 @@ export const ProductOverlayStudio = forwardRef<
     let y = 50;
     switch (preset) {
       case 'bottom-right':
-        x = 76;
+        x = 75;
         y = 75;
         break;
       case 'bottom-left':
-        x = 24;
+        x = 25;
         y = 75;
         break;
       case 'top-right':
-        x = 76;
+        x = 75;
         y = 25;
         break;
       case 'center':
@@ -125,26 +123,8 @@ export const ProductOverlayStudio = forwardRef<
     }));
   };
 
-  // Cycle to next corner preset on 1-tap
-  const cycleNextPreset = () => {
-    const currentIndex = PRESET_ORDER.indexOf(config.preset);
-    const nextPreset = PRESET_ORDER[(currentIndex + 1) % PRESET_ORDER.length];
-    applyPreset(nextPreset);
-  };
-
-  // Cycle sticker size on 1-tap: Small (0.32) -> Med (0.42) -> Large (0.52)
-  const cycleStickerSize = () => {
-    setConfig((prev) => {
-      if (prev.scale <= 0.35) return { ...prev, scale: 0.42 };
-      if (prev.scale <= 0.45) return { ...prev, scale: 0.52 };
-      return { ...prev, scale: 0.32 };
-    });
-  };
-
-  const getSizeLabel = () => {
-    if (config.scale <= 0.35) return 'S';
-    if (config.scale <= 0.45) return 'M';
-    return 'L';
+  const setStickerScale = (scale: number) => {
+    setConfig((prev) => ({ ...prev, scale }));
   };
 
   const handleSelectProduct = (product: AllmaxProduct) => {
@@ -152,7 +132,7 @@ export const ProductOverlayStudio = forwardRef<
     setConfig((prev) => ({
       ...prev,
       productId: product.id,
-      scale: product.defaultScale || 0.40,
+      scale: 0.32,
     }));
   };
 
@@ -186,8 +166,8 @@ export const ProductOverlayStudio = forwardRef<
     const rect = containerRef.current.getBoundingClientRect();
     const deltaX = ((clientX - dragStartRef.current.clientX) / rect.width) * 100;
     const deltaY = ((clientY - dragStartRef.current.clientY) / rect.height) * 100;
-    const newX = Math.max(12, Math.min(88, dragStartRef.current.startX + deltaX));
-    const newY = Math.max(12, Math.min(88, dragStartRef.current.startY + deltaY));
+    const newX = Math.max(15, Math.min(85, dragStartRef.current.startX + deltaX));
+    const newY = Math.max(15, Math.min(85, dragStartRef.current.startY + deltaY));
     setConfig((prev) => ({
       ...prev,
       x: Math.round(newX),
@@ -314,13 +294,18 @@ export const ProductOverlayStudio = forwardRef<
     generateMockup: handleGenerateMockup,
   }));
 
+  const filteredProducts =
+    selectedCategory === 'All'
+      ? ALLMAX_PRODUCTS
+      : ALLMAX_PRODUCTS.filter((p) => p.category === selectedCategory);
+
   return (
-    <div className="h-full flex flex-col justify-between overflow-hidden select-none">
-      {/* 1. Large Immersive Video Viewport (Matches Phone 3 in reference image) */}
-      <div className="flex-1 min-h-0 relative flex items-center justify-center p-1 sm:p-2">
+    <div className="h-full flex flex-col justify-between overflow-hidden select-none bg-slate-50/50">
+      {/* 1. Main Video Reel Canvas (True 9:16 Vertical Ratio, Beautifully Centered) */}
+      <div className="flex-1 min-h-0 relative flex items-center justify-center p-2">
         <div
           ref={containerRef}
-          className="relative h-full aspect-[9/16] max-h-[58vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200 select-none cursor-grab active:cursor-grabbing w-full"
+          className="relative h-full aspect-[9/16] max-h-[60vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200/90 select-none cursor-grab active:cursor-grabbing mx-auto"
           style={{ touchAction: 'none' }}
         >
           {media.type === 'video' ? (
@@ -343,7 +328,7 @@ export const ProductOverlayStudio = forwardRef<
             />
           )}
 
-          {/* Draggable Allmax Product Sticker */}
+          {/* Interactive Supplement Sticker Overlay */}
           <div
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
@@ -358,13 +343,13 @@ export const ProductOverlayStudio = forwardRef<
             }}
             className="cursor-grab active:cursor-grabbing select-none transition-transform"
           >
-            <div className="relative flex flex-col items-center justify-center filter drop-shadow-[0_16px_24px_rgba(0,0,0,0.85)]">
-              {/* Instagram Active Dragging Bounding Outline */}
+            <div className="relative flex flex-col items-center justify-center filter drop-shadow-[0_18px_26px_rgba(0,0,0,0.85)]">
+              {/* Active Dragging Bounding Feedback */}
               {isDragging && (
                 <div className="absolute -inset-2 border-2 border-dashed border-white rounded-2xl pointer-events-none animate-pulse" />
               )}
 
-              {/* Tub SVG Graphic */}
+              {/* High-Resolution Tub Graphic */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedProduct.svgGraphic}
@@ -373,7 +358,7 @@ export const ProductOverlayStudio = forwardRef<
                 draggable={false}
               />
 
-              {/* Sponsor Badge (Matches Phone 3 badge) */}
+              {/* Sponsor Badge */}
               {config.showBadge && (
                 <div className="mt-1 px-2.5 py-0.5 rounded-full bg-slate-950/95 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-lg border border-amber-400 whitespace-nowrap">
                   {config.badgeText || '⚡ ALLMAX ATHLETE'}
@@ -382,92 +367,134 @@ export const ProductOverlayStudio = forwardRef<
             </div>
           </div>
 
-          {/* Floating Top Left: Play / Pause */}
-          <div className="absolute top-3 left-3 z-35 flex items-center space-x-1.5 pointer-events-auto">
-            {media.type === 'video' && (
-              <button
-                onClick={togglePlay}
-                className="w-8 h-8 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-90 transition-transform shadow-lg"
-              >
-                {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
-              </button>
-            )}
-          </div>
+          {/* Floating Minimalist Top Toolbar (Clean Glassmorphism) */}
+          <div className="absolute top-3 left-3 right-3 z-35 flex items-center justify-between pointer-events-auto">
+            {/* Left: Play / Pause & Sound */}
+            <div className="flex items-center space-x-1.5">
+              {media.type === 'video' && (
+                <button
+                  onClick={togglePlay}
+                  className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-90 transition-transform shadow-lg hover:bg-black/80"
+                  title={isPlaying ? 'Pause' : 'Play'}
+                >
+                  {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
+                </button>
+              )}
 
-          {/* Floating Action Toolbar on Right (Matches Phone 3: Target, Size M, Sparkles, Sound) */}
-          <div className="absolute top-3 right-3 z-35 flex flex-col items-center space-y-2 pointer-events-auto">
-            {/* 1. Compass / Target Snap Pill */}
-            <button
-              onClick={cycleNextPreset}
-              className="w-9 h-9 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex flex-col items-center justify-center active:scale-90 transition-transform shadow-lg"
-              title="Snap Position"
-            >
-              <Compass className="w-4 h-4 text-orange-400" />
-            </button>
+              {media.type === 'video' && (
+                <button
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-90 transition-transform shadow-lg hover:bg-black/80"
+                  title={isMuted ? 'Unmute' : 'Mute'}
+                >
+                  {isMuted ? <VolumeX className="w-3.5 h-3.5 text-slate-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+                </button>
+              )}
+            </div>
 
-            {/* 2. Size Pill: [M] */}
-            <button
-              onClick={cycleStickerSize}
-              className="w-9 h-9 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex flex-col items-center justify-center active:scale-90 transition-transform shadow-lg font-black text-xs"
-              title="Toggle Size (S, M, L)"
-            >
-              <span className="text-amber-400 font-extrabold">{getSizeLabel()}</span>
-            </button>
-
-            {/* 3. Athlete Badge Toggle Pill (Sparkles) */}
+            {/* Right: Badge Toggle */}
             <button
               onClick={() => setConfig((p) => ({ ...p, showBadge: !p.showBadge }))}
-              className={`w-9 h-9 rounded-full backdrop-blur-md border flex items-center justify-center active:scale-90 transition-transform shadow-lg ${
+              className={`px-2.5 py-1 rounded-full backdrop-blur-md border text-[10px] font-extrabold flex items-center space-x-1 active:scale-90 transition-transform shadow-lg ${
                 config.showBadge
-                  ? 'bg-amber-500/90 text-white border-amber-300 ring-2 ring-amber-400/50'
-                  : 'bg-black/65 text-slate-400 border-white/20'
+                  ? 'bg-amber-500/90 text-white border-amber-300 ring-2 ring-amber-400/40'
+                  : 'bg-black/60 text-slate-300 border-white/20'
               }`}
-              title="Toggle Athlete Badge"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-3 h-3 text-amber-300" />
+              <span>Badge {config.showBadge ? 'ON' : 'OFF'}</span>
             </button>
+          </div>
 
-            {/* 4. Sound Toggle */}
-            {media.type === 'video' && (
-              <button
-                onClick={() => setIsMuted(!isMuted)}
-                className="w-9 h-9 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-90 transition-transform shadow-lg"
-                title={isMuted ? 'Unmute' : 'Mute'}
-              >
-                {isMuted ? <VolumeX className="w-4 h-4 text-slate-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
-              </button>
-            )}
+          {/* Drag Helper Tip on Bottom */}
+          <div className="absolute bottom-2.5 left-0 right-0 z-30 flex justify-center pointer-events-none">
+            <div className="bg-black/65 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-bold flex items-center space-x-1.5 border border-white/20 shadow-md">
+              <Move className="w-3 h-3 text-orange-400" />
+              <span>Drag supplement anywhere</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 2. Docked Bottom Drawer (Matches Phone 3 bottom drawer) */}
-      <div className="bg-white border-t border-slate-200 p-2.5 sm:p-3 shadow-2xl safe-bottom space-y-2">
-        {/* Header: Select Supplement on left, Search icon on right */}
-        <div className="flex items-center justify-between text-xs font-bold px-1">
-          <div className="flex items-center space-x-1.5 text-slate-900 font-extrabold">
-            <Layers className="w-4 h-4 text-[#FF4800]" />
-            <span>Select Supplement</span>
+      {/* 2. Redesigned Premium Bottom Drawer (Unified Controls + Large Product Cards) */}
+      <div className="bg-white border-t border-slate-200/90 p-3 sm:p-4 shadow-2xl safe-bottom space-y-2.5 rounded-t-3xl">
+        {/* Row 1: Fast Alignment & Size Controls (Zero-Scroll & 1-Tap) */}
+        <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-100">
+          {/* Quick Corner Snap Buttons */}
+          <div className="flex items-center space-x-1">
+            <span className="text-[10px] font-black uppercase text-slate-400 mr-0.5">Snap:</span>
+            {[
+              { id: 'bottom-right' as const, label: '↘ BR' },
+              { id: 'bottom-left' as const, label: '↙ BL' },
+              { id: 'top-right' as const, label: '↗ TR' },
+              { id: 'center' as const, label: '• CTR' },
+            ].map((p) => (
+              <button
+                key={p.id}
+                onClick={() => applyPreset(p.id)}
+                className={`px-2 py-1 rounded-lg text-[10px] font-black tracking-tight transition-all active:scale-95 ${
+                  config.preset === p.id
+                    ? 'bg-[#FF4800] text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
 
-          <Search className="w-3.5 h-3.5 text-slate-400 cursor-pointer hover:text-slate-700" />
+          {/* Size Pills: S, M, L */}
+          <div className="flex items-center space-x-1">
+            <span className="text-[10px] font-black uppercase text-slate-400 mr-0.5">Size:</span>
+            {[
+              { scale: 0.24, label: 'S' },
+              { scale: 0.32, label: 'M' },
+              { scale: 0.42, label: 'L' },
+            ].map((s) => (
+              <button
+                key={s.label}
+                onClick={() => setStickerScale(s.scale)}
+                className={`w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center transition-all active:scale-95 ${
+                  Math.abs(config.scale - s.scale) < 0.05
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Horizontal Product Cards Carousel (Matches Phone 3 card layout) */}
-        <div className="flex space-x-2 overflow-x-auto pb-0.5 scrollbar-none snap-x">
-          {ALLMAX_PRODUCTS.map((prod) => {
+        {/* Row 2: Product Carousel Header with Category Filters */}
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center space-x-1.5">
+            <Layers className="w-3.5 h-3.5 text-[#FF4800]" />
+            <span className="font-black text-slate-900">Choose Supplement</span>
+          </div>
+
+          {/* Selected Product Title */}
+          <span className="text-[#FF4800] font-black text-[11px] truncate max-w-[160px]">
+            {selectedProduct.name}
+          </span>
+        </div>
+
+        {/* Row 3: Modern Supplement Carousel (Larger Graphics, Clean Cards) */}
+        <div className="flex space-x-2.5 overflow-x-auto pb-1 scrollbar-none snap-x">
+          {filteredProducts.map((prod) => {
             const isSelected = selectedProduct.id === prod.id;
             return (
               <button
                 key={prod.id}
                 onClick={() => handleSelectProduct(prod)}
-                className={`w-[85px] sm:w-[92px] p-2 rounded-2xl border flex flex-col items-center justify-center shrink-0 snap-start transition-all active:scale-95 ${
+                className={`w-[96px] sm:w-[104px] p-2.5 rounded-2xl border flex flex-col items-center justify-between shrink-0 snap-start transition-all active:scale-95 ${
                   isSelected
-                    ? 'border-[#FF4800] bg-orange-50/90 ring-1 ring-[#FF4800] shadow-sm'
-                    : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                    ? 'border-[#FF4800] bg-orange-50/90 ring-2 ring-[#FF4800]/30 shadow-md'
+                    : 'border-slate-200/90 bg-white hover:bg-slate-50 shadow-sm'
                 }`}
               >
-                <div className="w-9 h-11 flex items-center justify-center mb-1">
+                {/* Large Crisp Tub Graphic */}
+                <div className="w-11 h-14 flex items-center justify-center mb-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={prod.svgGraphic}
@@ -475,30 +502,41 @@ export const ProductOverlayStudio = forwardRef<
                     className="max-h-full max-w-full object-contain pointer-events-none"
                   />
                 </div>
-                <span className="text-[10px] font-black text-slate-900 truncate w-full text-center block">
-                  {prod.name}
-                </span>
-                <span className="text-[8px] text-slate-500 truncate w-full text-center block font-bold uppercase">
-                  {prod.heroBadge}
-                </span>
+
+                {/* Bold Clean Name & Tag */}
+                <div className="w-full text-center">
+                  <span className="text-[11px] font-black text-slate-900 truncate w-full block leading-tight">
+                    {prod.name}
+                  </span>
+                  <span
+                    className={`text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-full inline-block mt-0.5 truncate max-w-full ${
+                      isSelected
+                        ? 'bg-[#FF4800] text-white'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {prod.category}
+                  </span>
+                </div>
               </button>
             );
           })}
         </div>
 
-        {/* Bottom Buttons Row: [← Media] on left, [CREATE VIDEO REEL →] on right */}
-        <div className="flex items-center space-x-2 pt-0.5">
+        {/* Row 4: Action Buttons Row */}
+        <div className="flex items-center space-x-2 pt-1">
           <button
             onClick={onBackToMedia}
-            className="py-3 px-3.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 active:scale-95 transition-all"
+            className="py-3 px-3.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 active:scale-95 transition-all flex items-center space-x-1"
           >
-            ← Media
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span>Media</span>
           </button>
 
           <button
             onClick={handleGenerateMockup}
             disabled={isRendering}
-            className="flex-1 py-3 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-1"
+            className="flex-1 py-3 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-1.5"
           >
             {isRendering ? (
               <>
@@ -508,25 +546,21 @@ export const ProductOverlayStudio = forwardRef<
             ) : (
               <>
                 <span>CREATE VIDEO REEL</span>
-                <span className="text-sm">→</span>
+                <ArrowRight className="w-4 h-4 stroke-[3]" />
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* ============================================================== */}
-      {/* PHONE 4: RENDERING MODAL (Matches Phone 4 in reference image)   */}
-      {/* ============================================================== */}
+      {/* Rendering Modal Dialog */}
       {isRendering && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in">
           <div className="bg-white rounded-3xl max-w-xs w-full p-6 text-center space-y-4 shadow-2xl border border-slate-100">
-            {/* Orange Circle with Spinner */}
             <div className="w-14 h-14 mx-auto rounded-2xl bg-orange-100 text-[#FF4800] flex items-center justify-center shadow-inner">
               <Loader2 className="w-7 h-7 animate-spin" />
             </div>
 
-            {/* Title & Subtitle */}
             <div className="space-y-1">
               <h3 className="text-base font-black text-slate-900 tracking-tight">
                 Rendering Allmax Reel
@@ -536,7 +570,6 @@ export const ProductOverlayStudio = forwardRef<
               </p>
             </div>
 
-            {/* Progress Bar */}
             <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
               <div
                 className="bg-[#FF4800] h-full transition-all duration-300 rounded-full"
@@ -544,7 +577,6 @@ export const ProductOverlayStudio = forwardRef<
               />
             </div>
 
-            {/* Progress Percentage */}
             <div className="text-xs font-black text-[#FF4800]">
               {renderProgress}% Complete
             </div>
