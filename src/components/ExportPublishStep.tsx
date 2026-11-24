@@ -13,8 +13,6 @@ import {
   Share2,
   Copy,
   Check,
-  RotateCcw,
-  Sliders,
   Volume2,
   VolumeX,
   ArrowUpRight,
@@ -399,25 +397,6 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
             <Download className="w-4 h-4 stroke-[3]" />
             <span>DOWNLOAD VIDEO (.MP4)</span>
           </button>
-
-          {/* Bottom Navigation Links: Adjust Position & New Video */}
-          <div className="flex items-center justify-between px-1 pt-1 text-xs font-bold text-slate-700">
-            <button
-              onClick={onTweakPosition}
-              className="flex items-center space-x-1 py-1 px-2 rounded-lg hover:text-slate-900 active:scale-95"
-            >
-              <Sliders className="w-3.5 h-3.5 text-slate-500" />
-              <span>Adjust Position</span>
-            </button>
-
-            <button
-              onClick={onNewMockup}
-              className="flex items-center space-x-1 py-1 px-2 rounded-lg hover:text-[#FF4800] active:scale-95"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-              <span>New Video</span>
-            </button>
-          </div>
         </div>
       </div>
 
