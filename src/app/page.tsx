@@ -66,7 +66,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] flex flex-col bg-white text-slate-900 overflow-hidden select-none">
+    <div className="h-full w-full flex flex-col bg-white text-slate-900 overflow-hidden select-none">
       <Navbar
         currentStep={currentStep}
         onStepClick={(step) => {

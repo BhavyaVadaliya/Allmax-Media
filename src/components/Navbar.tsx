@@ -38,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="shrink-0 z-50 bg-white border-b border-slate-200">
+    <header className="shrink-0 z-50 bg-white border-b border-slate-200 safe-top">
       <div className="max-w-lg mx-auto px-4 h-12 flex items-center justify-between">
         {/* Left Action: Brand Logo (Step 1) or Back Button (Step 2 & 3) */}
         <div className="flex items-center min-w-[80px]">
