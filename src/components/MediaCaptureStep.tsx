@@ -15,13 +15,13 @@ import {
   Play,
   Pause,
   ArrowRight,
-  Sparkles,
+  Film,
 } from 'lucide-react';
 import { MediaItem } from '@/types';
 import { SAMPLE_CREATOR_MEDIA } from '@/data/allmaxProducts';
 
 interface MediaCaptureStepProps {
-  onMediaSelected: (media: MediaItem) => void;
+  onMediaSelected: (media: MediaItem | null) => void;
   selectedMedia: MediaItem | null;
   onProceedToStudio: () => void;
 }
@@ -45,13 +45,6 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
   const recordedChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Default to first workout clip if nothing selected
-  useEffect(() => {
-    if (!selectedMedia && SAMPLE_CREATOR_MEDIA.length > 0) {
-      onMediaSelected(SAMPLE_CREATOR_MEDIA[0]);
-    }
-  }, [selectedMedia, onMediaSelected]);
 
   const stopCameraStream = useCallback(() => {
     if (mediaStreamRef.current) {
@@ -93,7 +86,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
       }
     } catch (err: any) {
       console.error('Camera access error:', err);
-      setCameraError('Camera access denied. Please allow camera permissions or upload a video.');
+      setCameraError('Camera access denied. Please allow camera permissions or choose from gallery.');
     }
   };
 
@@ -137,7 +130,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
         setRecordingSeconds((prev) => prev + 1);
       }, 1000);
     } catch (e: any) {
-      console.error('Recording initialization failed:', e);
+      console.error('Recording error:', e);
       setCameraError('Recording failed: ' + e.message);
     }
   };
@@ -193,7 +186,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col justify-between overflow-hidden">
+    <div className="h-full flex flex-col justify-between overflow-hidden select-none">
       {/* Hidden File Input */}
       <input
         ref={fileInputRef}
@@ -203,11 +196,10 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
         className="hidden"
       />
 
-      {/* Main Video/Media Viewport (Takes all available vertical space, Large & Immersive) */}
-      <div className="flex-1 min-h-0 relative flex items-center justify-center p-1 sm:p-2">
-        {showCamera ? (
-          /* Live Camera View */
-          <div className="relative h-full aspect-[9/16] max-h-[58vh] bg-black rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-700 flex flex-col justify-between">
+      {/* Camera Fullscreen Overlay */}
+      {showCamera ? (
+        <div className="flex-1 min-h-0 relative flex items-center justify-center p-2">
+          <div className="relative h-full aspect-[9/16] max-h-[58vh] bg-black rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-700 flex flex-col justify-between w-full">
             <video
               ref={liveCameraRef}
               autoPlay
@@ -216,7 +208,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
               className="absolute inset-0 w-full h-full object-cover"
             />
 
-            {/* Top Camera Controls */}
+            {/* Top Bar */}
             <div className="relative z-20 p-3 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent">
               <span className="text-xs font-black text-white uppercase tracking-wider flex items-center space-x-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
@@ -230,7 +222,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
               </button>
             </div>
 
-            {/* Bottom Camera Record Trigger */}
+            {/* Record Trigger */}
             <div className="relative z-20 p-4 flex flex-col items-center justify-center bg-gradient-to-t from-black/80 to-transparent">
               {isRecording ? (
                 <div className="flex flex-col items-center space-y-2">
@@ -262,150 +254,235 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
                   onClick={() => setShowCamera(false)}
                   className="px-4 py-2 bg-white text-slate-900 rounded-xl text-xs font-bold"
                 >
-                  Back to Media
+                  Back
                 </button>
               </div>
             )}
           </div>
-        ) : selectedMedia ? (
-          /* Large Selected Media Preview (Instagram Reel Style) */
-          <div className="relative h-full aspect-[9/16] max-h-[58vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200">
-            {selectedMedia.type === 'video' ? (
-              <video
-                key={selectedMedia.url}
-                ref={previewVideoRef}
-                src={selectedMedia.url}
-                autoPlay
-                loop
-                muted={isMuted}
-                playsInline
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={selectedMedia.url}
-                alt="Selected Media"
-                className="w-full h-full object-cover"
-              />
-            )}
+        </div>
+      ) : !selectedMedia ? (
+        /* ============================================================== */
+        /* PHONE 1: INITIAL STATE (Select or Record Workout Video)         */
+        /* ============================================================== */
+        <div className="flex-1 min-h-0 flex flex-col justify-between p-3 overflow-hidden">
+          {/* Big Dashed Card */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 min-h-0 border-2 border-dashed border-slate-300 rounded-3xl bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:border-[#FF4800] transition-colors max-h-[46vh] my-auto"
+          >
+            {/* Orange Video Camera Icon Badge */}
+            <div className="w-16 h-16 rounded-2xl bg-[#FF4800] text-white flex items-center justify-center shadow-lg shadow-orange-500/30 mb-3">
+              <Film className="w-8 h-8" />
+            </div>
 
-            {/* Floating Top Controls on Video */}
-            <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between">
-              <div className="flex items-center space-x-1.5">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+              Select or Record Workout Video
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-1">
+              9:16 Vertical Reel • MP4 / MOV
+            </p>
+          </div>
+
+          {/* Action Row: From Gallery & Record Camera */}
+          <div className="grid grid-cols-2 gap-2.5 my-3">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center justify-center space-x-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all text-xs font-black text-slate-800 shadow-sm"
+            >
+              <FolderOpen className="w-4 h-4 text-[#FF4800]" />
+              <span>From Gallery</span>
+            </button>
+
+            <button
+              onClick={startCamera}
+              className="flex items-center justify-center space-x-2 py-3 px-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all text-xs font-black text-slate-800 shadow-sm"
+            >
+              <Camera className="w-4 h-4 text-[#FF4800]" />
+              <span>Record Camera</span>
+            </button>
+          </div>
+
+          {/* Or Try 1-Tap Demo Clips Section */}
+          <div className="space-y-2">
+            <span className="text-xs font-black text-slate-900 block px-0.5">
+              Or Try 1-Tap Demo Clips
+            </span>
+
+            <div className="grid grid-cols-3 gap-2">
+              {SAMPLE_CREATOR_MEDIA.slice(0, 3).map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => onMediaSelected(item)}
+                  className="relative aspect-[9/14] rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm group active:scale-95 transition-transform"
+                >
+                  {/* Thumbnail / Video */}
+                  {item.thumbnail ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={item.thumbnail}
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <video
+                      src={item.url}
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+
+                  {/* Dark gradient overlay + Label */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex items-end p-1.5">
+                    <span className="text-[9px] font-black text-white leading-tight line-clamp-2 text-left">
+                      {item.name.replace(' Workout', '').replace(' Heavy Session', '')}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom Disabled Pill Button (Matches Phone 1 DISABLE CTA) */}
+          <div className="pt-3 pb-1">
+            <button
+              disabled
+              className="w-full py-3 px-4 rounded-xl bg-slate-200 text-slate-400 font-black text-xs uppercase tracking-wider cursor-not-allowed"
+            >
+              DISABLE CTA
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* ============================================================== */
+        /* PHONE 2: MEDIA SELECTED STATE                                  */
+        /* ============================================================== */
+        <div className="h-full flex flex-col justify-between overflow-hidden">
+          {/* Main Large Video Preview (Occupies upper viewport) */}
+          <div className="flex-1 min-h-0 relative flex items-center justify-center p-1 sm:p-2">
+            <div className="relative h-full aspect-[9/16] max-h-[58vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200 w-full">
+              {selectedMedia.type === 'video' ? (
+                <video
+                  key={selectedMedia.url}
+                  ref={previewVideoRef}
+                  src={selectedMedia.url}
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={selectedMedia.url}
+                  alt="Selected Media"
+                  className="w-full h-full object-cover"
+                />
+              )}
+
+              {/* Floating Top Left: Pause / Play & Mute / Unmute */}
+              <div className="absolute top-3 left-3 z-30 flex items-center space-x-2">
                 {selectedMedia.type === 'video' && (
                   <button
                     onClick={togglePlay}
-                    className="p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-black/80 transition-colors shadow-md"
+                    className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center border border-white/20 active:scale-90 transition-transform shadow-lg"
                     title={isPlaying ? 'Pause' : 'Play'}
                   >
                     {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
                   </button>
                 )}
+
                 {selectedMedia.type === 'video' && (
                   <button
                     onClick={() => setIsMuted(!isMuted)}
-                    className="p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-black/80 transition-colors shadow-md"
+                    className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center border border-white/20 active:scale-90 transition-transform shadow-lg"
                     title={isMuted ? 'Unmute' : 'Mute'}
                   >
-                    {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
+                    {isMuted ? <VolumeX className="w-3.5 h-3.5 text-slate-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-400" />}
                   </button>
                 )}
               </div>
 
-              {/* Ready Tag */}
-              <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-extrabold flex items-center space-x-1 border border-white/20">
+              {/* Floating Top Right: Selected Badge */}
+              <div className="absolute top-3 right-3 z-30 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-extrabold flex items-center space-x-1.5 border border-white/20 shadow-lg">
                 <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
                 <span>Selected</span>
               </div>
-            </div>
 
-            {/* Floating "Replace Media" Pill */}
-            <div className="absolute bottom-2.5 left-0 right-0 z-20 flex justify-center">
+              {/* Floating Bottom Center: Replace Media Button */}
+              <div className="absolute bottom-3 left-0 right-0 z-30 flex justify-center">
+                <button
+                  onClick={() => onMediaSelected(null)}
+                  className="px-4 py-1.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[11px] font-bold border border-white/25 hover:bg-black/90 active:scale-95 transition-all flex items-center space-x-1.5 shadow-xl"
+                >
+                  <RefreshCw className="w-3 h-3 text-orange-400" />
+                  <span>Replace Media</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Docked Bottom Tray (Matches Phone 2 bottom section) */}
+          <div className="bg-white border-t border-slate-200 p-2.5 sm:p-3 shadow-2xl safe-bottom space-y-2">
+            {/* Row 1: Gallery & Camera buttons */}
+            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-3.5 py-1.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[11px] font-bold border border-white/25 hover:bg-black/90 active:scale-95 transition-all flex items-center space-x-1.5 shadow-lg"
+                className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all text-xs font-black text-slate-800 shadow-sm"
               >
-                <RefreshCw className="w-3 h-3 text-orange-400" />
-                <span>Replace Media</span>
+                <FolderOpen className="w-3.5 h-3.5 text-[#FF4800]" />
+                <span>From Gallery</span>
+              </button>
+
+              <button
+                onClick={startCamera}
+                className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all text-xs font-black text-slate-800 shadow-sm"
+              >
+                <Camera className="w-3.5 h-3.5 text-[#FF4800]" />
+                <span>Record Camera</span>
               </button>
             </div>
-          </div>
-        ) : (
-          /* Empty State prompt */
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="h-full aspect-[9/16] max-h-[58vh] bg-slate-100 rounded-3xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:border-[#FF4800] transition-colors"
-          >
-            <Upload className="w-12 h-12 text-slate-400 mb-2" />
-            <span className="text-sm font-black text-slate-800">Tap to Choose Video</span>
-            <span className="text-xs text-slate-500 mt-1">Upload workout video or photo</span>
-          </div>
-        )}
-      </div>
 
-      {/* Docked Instagram-Style Media Tray (Fixed at bottom, No Scrolling Needed) */}
-      <div className="bg-white border-t border-slate-200 p-2.5 sm:p-3 shadow-2xl safe-bottom space-y-2">
-        {/* Row 1: Big Direct Buttons: Gallery & Camera */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 active:scale-95 transition-all text-xs font-black text-slate-800 shadow-sm"
-          >
-            <FolderOpen className="w-4 h-4 text-[#FF4800]" />
-            <span>From Gallery</span>
-          </button>
+            {/* Row 2: Demo Workout Clips Carousel */}
+            <div>
+              <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1 px-1">
+                <span>Or Choose Demo Workout Clips:</span>
+                <span className="text-[#FF4800] font-black">1-Tap Ready</span>
+              </div>
 
-          <button
-            onClick={startCamera}
-            className="flex items-center justify-center space-x-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 active:scale-95 transition-all text-xs font-black text-slate-800 shadow-sm"
-          >
-            <Camera className="w-4 h-4 text-[#FF4800]" />
-            <span>Record Camera</span>
-          </button>
-        </div>
+              <div className="flex space-x-2 overflow-x-auto pb-0.5 scrollbar-none snap-x">
+                {SAMPLE_CREATOR_MEDIA.map((item) => {
+                  const isSelected = selectedMedia?.id === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onMediaSelected(item)}
+                      className={`h-9 px-3 rounded-xl border flex items-center space-x-1.5 shrink-0 snap-start transition-all active:scale-95 text-xs ${
+                        isSelected
+                          ? 'border-[#FF4800] bg-orange-50 text-[#FF4800] font-black ring-1 ring-[#FF4800]'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold'
+                      }`}
+                    >
+                      <Video className="w-3 h-3 shrink-0 text-[#FF4800]" />
+                      <span className="truncate max-w-[130px]">{item.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-        {/* Row 2: Instant Workout Sample Clips (1-Tap Test) */}
-        <div>
-          <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 mb-1 px-1">
-            <span>Or Choose Demo Workout Clip:</span>
-            <span className="text-[#FF4800] font-black">1-Tap Ready</span>
-          </div>
-
-          <div className="flex space-x-2 overflow-x-auto pb-0.5 scrollbar-none snap-x">
-            {SAMPLE_CREATOR_MEDIA.map((item, idx) => {
-              const isSelected = selectedMedia?.id === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    onMediaSelected(item);
-                    setShowCamera(false);
-                  }}
-                  className={`h-11 px-3 rounded-xl border flex items-center space-x-2 shrink-0 snap-start transition-all active:scale-95 ${
-                    isSelected
-                      ? 'border-[#FF4800] bg-orange-50/90 text-[#FF4800] ring-2 ring-[#FF4800]/30 font-black'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold'
-                  }`}
-                >
-                  <Video className="w-3.5 h-3.5 shrink-0 text-[#FF4800]" />
-                  <span className="text-xs truncate max-w-[140px]">{item.name}</span>
-                </button>
-              );
-            })}
+            {/* Row 3: Big Orange Primary Next Button */}
+            <button
+              onClick={onProceedToStudio}
+              className="w-full py-3 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
+            >
+              <span>NEXT: ADD SUPPLEMENT STICKER</span>
+              <span className="text-sm">→</span>
+            </button>
           </div>
         </div>
-
-        {/* Row 3: Primary Next Button */}
-        <button
-          onClick={onProceedToStudio}
-          disabled={!selectedMedia}
-          className="w-full py-3 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center space-x-2"
-        >
-          <span>Next: Add Supplement Sticker</span>
-          <ArrowRight className="w-4 h-4 stroke-[3]" />
-        </button>
-      </div>
+      )}
     </div>
   );
 };

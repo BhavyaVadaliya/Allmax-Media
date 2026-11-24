@@ -22,7 +22,7 @@ export default function HomePage() {
 
   const studioRef = useRef<ProductOverlayStudioRef | null>(null);
 
-  const handleMediaSelected = (media: MediaItem) => {
+  const handleMediaSelected = (media: MediaItem | null) => {
     setSelectedMedia(media);
   };
 
@@ -57,16 +57,16 @@ export default function HomePage() {
 
   const getNextLabel = () => {
     if (currentStep === 2) {
-      return isRendering ? `${renderProgress}%` : 'Next';
+      return isRendering ? `${renderProgress}%` : 'NEXT';
     }
     if (currentStep === 3) {
-      return 'Done';
+      return 'DONE';
     }
-    return 'Next';
+    return 'NEXT';
   };
 
   return (
-    <div className="h-[100dvh] max-h-[100dvh] flex flex-col bg-[#F8FAFC] text-slate-900 overflow-hidden select-none">
+    <div className="h-[100dvh] max-h-[100dvh] flex flex-col bg-white text-slate-900 overflow-hidden select-none">
       <Navbar
         currentStep={currentStep}
         onStepClick={(step) => {
@@ -86,7 +86,7 @@ export default function HomePage() {
       />
 
       <main className="flex-1 min-h-0 w-full max-w-lg mx-auto flex flex-col overflow-hidden">
-        {/* Step 1: Media Selection (Large Video, Docked Tray, Zero Scroll) */}
+        {/* Step 1: Media Capture or Selection (Matches Phone 1 & 2) */}
         {currentStep === 1 && (
           <MediaCaptureStep
             selectedMedia={selectedMedia}
@@ -95,7 +95,7 @@ export default function HomePage() {
           />
         )}
 
-        {/* Step 2: Overlay Studio (Large Reel Canvas, Floating Tools, Zero Scroll) */}
+        {/* Step 2: Overlay Studio & Rendering Modal (Matches Phone 3 & 4) */}
         {currentStep === 2 && selectedMedia && (
           <ProductOverlayStudio
             ref={studioRef}
@@ -112,7 +112,7 @@ export default function HomePage() {
           />
         )}
 
-        {/* Step 3: Export & Share (Composer Card, Direct Action Buttons, Zero Scroll) */}
+        {/* Step 3: Export & Share (Matches Phone 5) */}
         {currentStep === 3 && renderResult && (
           <ExportPublishStep
             renderResult={renderResult}

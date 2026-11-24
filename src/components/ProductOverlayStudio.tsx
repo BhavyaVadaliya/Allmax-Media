@@ -21,16 +21,12 @@ import {
   Play,
   Pause,
   Loader2,
-  Check,
-  ArrowRight,
   Sparkles,
-  Maximize2,
-  Move,
   Volume2,
   VolumeX,
   Compass,
   Layers,
-  ChevronRight,
+  Search,
 } from 'lucide-react';
 
 export interface ProductOverlayStudioRef {
@@ -92,7 +88,9 @@ export const ProductOverlayStudio = forwardRef<
 
   const [isRendering, setIsRendering] = useState<boolean>(false);
   const [renderProgress, setRenderProgress] = useState<number>(0);
-  const [renderMessage, setRenderMessage] = useState<string>('Preparing video render...');
+  const [renderMessage, setRenderMessage] = useState<string>(
+    'Rendering frames with client-side video compositor...'
+  );
 
   useEffect(() => {
     onRenderingChange?.(isRendering, renderProgress);
@@ -257,7 +255,7 @@ export const ProductOverlayStudio = forwardRef<
     if (isRendering) return;
     setIsRendering(true);
     setRenderProgress(10);
-    setRenderMessage('Preparing workout video...');
+    setRenderMessage('Rendering frames with client-side video compositor...');
 
     try {
       let mediaElement: HTMLVideoElement | HTMLImageElement;
@@ -318,11 +316,11 @@ export const ProductOverlayStudio = forwardRef<
 
   return (
     <div className="h-full flex flex-col justify-between overflow-hidden select-none">
-      {/* 1. Large Immersive Video Viewport (Takes up majority of screen) */}
+      {/* 1. Large Immersive Video Viewport (Matches Phone 3 in reference image) */}
       <div className="flex-1 min-h-0 relative flex items-center justify-center p-1 sm:p-2">
         <div
           ref={containerRef}
-          className="relative h-full aspect-[9/16] max-h-[58vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200 select-none cursor-grab active:cursor-grabbing"
+          className="relative h-full aspect-[9/16] max-h-[58vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200 select-none cursor-grab active:cursor-grabbing w-full"
           style={{ touchAction: 'none' }}
         >
           {media.type === 'video' ? (
@@ -375,7 +373,7 @@ export const ProductOverlayStudio = forwardRef<
                 draggable={false}
               />
 
-              {/* Sponsor Badge */}
+              {/* Sponsor Badge (Matches Phone 3 badge) */}
               {config.showBadge && (
                 <div className="mt-1 px-2.5 py-0.5 rounded-full bg-slate-950/95 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-lg border border-amber-400 whitespace-nowrap">
                   {config.badgeText || '⚡ ALLMAX ATHLETE'}
@@ -384,9 +382,21 @@ export const ProductOverlayStudio = forwardRef<
             </div>
           </div>
 
-          {/* Floating Action Toolbar on Right (TikTok/Reels Style - 0 Extra Space Used) */}
-          <div className="absolute top-3 right-2.5 z-35 flex flex-col items-center space-y-2 pointer-events-auto">
-            {/* Snap Position Pill (1-Tap Cycle) */}
+          {/* Floating Top Left: Play / Pause */}
+          <div className="absolute top-3 left-3 z-35 flex items-center space-x-1.5 pointer-events-auto">
+            {media.type === 'video' && (
+              <button
+                onClick={togglePlay}
+                className="w-8 h-8 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex items-center justify-center active:scale-90 transition-transform shadow-lg"
+              >
+                {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
+              </button>
+            )}
+          </div>
+
+          {/* Floating Action Toolbar on Right (Matches Phone 3: Target, Size M, Sparkles, Sound) */}
+          <div className="absolute top-3 right-3 z-35 flex flex-col items-center space-y-2 pointer-events-auto">
+            {/* 1. Compass / Target Snap Pill */}
             <button
               onClick={cycleNextPreset}
               className="w-9 h-9 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex flex-col items-center justify-center active:scale-90 transition-transform shadow-lg"
@@ -395,21 +405,21 @@ export const ProductOverlayStudio = forwardRef<
               <Compass className="w-4 h-4 text-orange-400" />
             </button>
 
-            {/* Size Pill: S / M / L */}
+            {/* 2. Size Pill: [M] */}
             <button
               onClick={cycleStickerSize}
-              className="w-9 h-9 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex flex-col items-center justify-center active:scale-90 transition-transform shadow-lg font-black text-[11px]"
+              className="w-9 h-9 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 flex flex-col items-center justify-center active:scale-90 transition-transform shadow-lg font-black text-xs"
               title="Toggle Size (S, M, L)"
             >
-              <span className="text-amber-400">{getSizeLabel()}</span>
+              <span className="text-amber-400 font-extrabold">{getSizeLabel()}</span>
             </button>
 
-            {/* Sponsor Badge Toggle Pill */}
+            {/* 3. Athlete Badge Toggle Pill (Sparkles) */}
             <button
               onClick={() => setConfig((p) => ({ ...p, showBadge: !p.showBadge }))}
               className={`w-9 h-9 rounded-full backdrop-blur-md border flex items-center justify-center active:scale-90 transition-transform shadow-lg ${
                 config.showBadge
-                  ? 'bg-amber-500/90 text-white border-amber-300'
+                  ? 'bg-amber-500/90 text-white border-amber-300 ring-2 ring-amber-400/50'
                   : 'bg-black/65 text-slate-400 border-white/20'
               }`}
               title="Toggle Athlete Badge"
@@ -417,7 +427,7 @@ export const ProductOverlayStudio = forwardRef<
               <Sparkles className="w-4 h-4" />
             </button>
 
-            {/* Sound Toggle */}
+            {/* 4. Sound Toggle */}
             {media.type === 'video' && (
               <button
                 onClick={() => setIsMuted(!isMuted)}
@@ -428,43 +438,22 @@ export const ProductOverlayStudio = forwardRef<
               </button>
             )}
           </div>
-
-          {/* Floating Left Top: Play / Pause */}
-          <div className="absolute top-3 left-2.5 z-35 flex items-center space-x-1.5 pointer-events-auto">
-            {media.type === 'video' && (
-              <button
-                onClick={togglePlay}
-                className="p-2 rounded-full bg-black/65 backdrop-blur-md text-white border border-white/20 active:scale-90 transition-transform shadow-lg"
-              >
-                {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
-              </button>
-            )}
-          </div>
-
-          {/* Drag Indicator Tooltip on Bottom of Video */}
-          <div className="absolute bottom-2.5 left-0 right-0 z-30 flex justify-center pointer-events-none">
-            <div className="bg-black/65 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-extrabold flex items-center space-x-1.5 border border-white/20 shadow-md">
-              <Move className="w-3 h-3 text-orange-400" />
-              <span>Drag supplement anywhere</span>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* 2. Docked Bottom Drawer (Fixed, No Scrolling Needed on Mobile) */}
+      {/* 2. Docked Bottom Drawer (Matches Phone 3 bottom drawer) */}
       <div className="bg-white border-t border-slate-200 p-2.5 sm:p-3 shadow-2xl safe-bottom space-y-2">
-        {/* Product Drawer Header */}
+        {/* Header: Select Supplement on left, Search icon on right */}
         <div className="flex items-center justify-between text-xs font-bold px-1">
-          <div className="flex items-center space-x-1 text-slate-800">
-            <Layers className="w-3.5 h-3.5 text-[#FF4800]" />
-            <span>Select Supplement:</span>
+          <div className="flex items-center space-x-1.5 text-slate-900 font-extrabold">
+            <Layers className="w-4 h-4 text-[#FF4800]" />
+            <span>Select Supplement</span>
           </div>
-          <span className="text-[#FF4800] font-black text-[11px] truncate max-w-[170px]">
-            {selectedProduct.name}
-          </span>
+
+          <Search className="w-3.5 h-3.5 text-slate-400 cursor-pointer hover:text-slate-700" />
         </div>
 
-        {/* Large Horizontal Product Cards Carousel */}
+        {/* Horizontal Product Cards Carousel (Matches Phone 3 card layout) */}
         <div className="flex space-x-2 overflow-x-auto pb-0.5 scrollbar-none snap-x">
           {ALLMAX_PRODUCTS.map((prod) => {
             const isSelected = selectedProduct.id === prod.id;
@@ -472,9 +461,9 @@ export const ProductOverlayStudio = forwardRef<
               <button
                 key={prod.id}
                 onClick={() => handleSelectProduct(prod)}
-                className={`w-[85px] sm:w-[95px] p-2 rounded-2xl border flex flex-col items-center justify-center shrink-0 snap-start transition-all active:scale-95 ${
+                className={`w-[85px] sm:w-[92px] p-2 rounded-2xl border flex flex-col items-center justify-center shrink-0 snap-start transition-all active:scale-95 ${
                   isSelected
-                    ? 'border-[#FF4800] bg-orange-50/90 ring-2 ring-[#FF4800]/30 shadow-md'
+                    ? 'border-[#FF4800] bg-orange-50/90 ring-1 ring-[#FF4800] shadow-sm'
                     : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
                 }`}
               >
@@ -497,11 +486,11 @@ export const ProductOverlayStudio = forwardRef<
           })}
         </div>
 
-        {/* Big Bottom Action Button */}
+        {/* Bottom Buttons Row: [← Media] on left, [CREATE VIDEO REEL →] on right */}
         <div className="flex items-center space-x-2 pt-0.5">
           <button
             onClick={onBackToMedia}
-            className="py-3 px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold text-xs hover:bg-slate-100 active:scale-95 transition-all"
+            className="py-3 px-3.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 active:scale-95 transition-all"
           >
             ← Media
           </button>
@@ -509,7 +498,7 @@ export const ProductOverlayStudio = forwardRef<
           <button
             onClick={handleGenerateMockup}
             disabled={isRendering}
-            className="flex-1 py-3 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-2"
+            className="flex-1 py-3 px-4 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center space-x-1"
           >
             {isRendering ? (
               <>
@@ -518,32 +507,36 @@ export const ProductOverlayStudio = forwardRef<
               </>
             ) : (
               <>
-                <span>Create Video Reel</span>
-                <ArrowRight className="w-4 h-4 stroke-[3]" />
+                <span>CREATE VIDEO REEL</span>
+                <span className="text-sm">→</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* Fullscreen Rendering Loader Overlay */}
+      {/* ============================================================== */}
+      {/* PHONE 4: RENDERING MODAL (Matches Phone 4 in reference image)   */}
+      {/* ============================================================== */}
       {isRendering && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in">
           <div className="bg-white rounded-3xl max-w-xs w-full p-6 text-center space-y-4 shadow-2xl border border-slate-100">
+            {/* Orange Circle with Spinner */}
             <div className="w-14 h-14 mx-auto rounded-2xl bg-orange-100 text-[#FF4800] flex items-center justify-center shadow-inner">
               <Loader2 className="w-7 h-7 animate-spin" />
             </div>
 
+            {/* Title & Subtitle */}
             <div className="space-y-1">
               <h3 className="text-base font-black text-slate-900 tracking-tight">
                 Rendering Allmax Reel
               </h3>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
                 {renderMessage}
               </p>
             </div>
 
-            {/* Progress bar */}
+            {/* Progress Bar */}
             <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
               <div
                 className="bg-[#FF4800] h-full transition-all duration-300 rounded-full"
@@ -551,6 +544,7 @@ export const ProductOverlayStudio = forwardRef<
               />
             </div>
 
+            {/* Progress Percentage */}
             <div className="text-xs font-black text-[#FF4800]">
               {renderProgress}% Complete
             </div>
