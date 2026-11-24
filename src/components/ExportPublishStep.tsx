@@ -46,8 +46,8 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Draggable bottom sheet state (slider)
-  const [isSheetCollapsed, setIsSheetCollapsed] = useState<boolean>(false);
+  // 3-Mode Draggable bottom sheet slider: 'collapsed' (watch reel) | 'normal' (standard) | 'expanded' (big caption)
+  const [sheetMode, setSheetMode] = useState<'collapsed' | 'normal' | 'expanded'>('normal');
   const [dragY, setDragY] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const dragStartYRef = useRef<number>(0);
@@ -139,27 +139,26 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
     if (!isDragging || e.touches.length !== 1) return;
     const currentY = e.touches[0].clientY;
     const deltaY = currentY - dragStartYRef.current;
-
-    // If expanded, allow dragging down (positive delta)
-    if (!isSheetCollapsed && deltaY > 0) {
-      setDragY(deltaY);
-    } else if (isSheetCollapsed && deltaY < 0) {
-      // If collapsed, allow dragging up (negative delta)
-      setDragY(deltaY);
-    }
+    setDragY(deltaY);
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
 
-    if (!isSheetCollapsed) {
-      if (dragY > 60) {
-        setIsSheetCollapsed(true);
+    if (sheetMode === 'normal') {
+      if (dragY > 50) {
+        setSheetMode('collapsed');
+      } else if (dragY < -50) {
+        setSheetMode('expanded');
       }
-    } else {
-      if (dragY < -60) {
-        setIsSheetCollapsed(false);
+    } else if (sheetMode === 'collapsed') {
+      if (dragY < -40) {
+        setSheetMode('normal');
+      }
+    } else if (sheetMode === 'expanded') {
+      if (dragY > 50) {
+        setSheetMode('normal');
       }
     }
     setDragY(0);
@@ -175,29 +174,32 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
     (e: MouseEvent) => {
       if (!isDragging) return;
       const deltaY = e.clientY - dragStartYRef.current;
-      if (!isSheetCollapsed && deltaY > 0) {
-        setDragY(deltaY);
-      } else if (isSheetCollapsed && deltaY < 0) {
-        setDragY(deltaY);
-      }
+      setDragY(deltaY);
     },
-    [isDragging, isSheetCollapsed]
+    [isDragging]
   );
 
   const handleMouseUp = useCallback(() => {
     if (!isDragging) return;
     setIsDragging(false);
-    if (!isSheetCollapsed) {
-      if (dragY > 60) {
-        setIsSheetCollapsed(true);
+
+    if (sheetMode === 'normal') {
+      if (dragY > 50) {
+        setSheetMode('collapsed');
+      } else if (dragY < -50) {
+        setSheetMode('expanded');
       }
-    } else {
-      if (dragY < -60) {
-        setIsSheetCollapsed(false);
+    } else if (sheetMode === 'collapsed') {
+      if (dragY < -40) {
+        setSheetMode('normal');
+      }
+    } else if (sheetMode === 'expanded') {
+      if (dragY > 50) {
+        setSheetMode('normal');
       }
     }
     setDragY(0);
-  }, [isDragging, isSheetCollapsed, dragY]);
+  }, [isDragging, sheetMode, dragY]);
 
   useEffect(() => {
     if (isDragging) {
@@ -262,23 +264,32 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
         </div>
 
         {/* Floating Fullscreen Mode Indicator when Collapsed */}
-        {isSheetCollapsed && (
+        {sheetMode === 'collapsed' && (
           <div className="absolute top-3 right-3 z-20 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white font-extrabold flex items-center space-x-1 border border-white/20 shadow-lg">
             <span>Watching Full Reel</span>
           </div>
         )}
       </div>
 
-      {/* 2. Draggable Bottom Sheet Slider (Caption, Share, Download) */}
+      {/* 2. Draggable Bottom Sheet Slider (Caption, Share, Download, Done) */}
       <div
         ref={sheetRef}
         style={{
-          transform: isSheetCollapsed
-            ? `translateY(calc(100% - 68px + ${isDragging && dragY < 0 ? dragY : 0}px))`
-            : `translateY(${isDragging && dragY > 0 ? dragY : 0}px)`,
-          transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+          transform:
+            sheetMode === 'collapsed'
+              ? `translateY(calc(100% - 68px + ${isDragging && dragY < 0 ? dragY : 0}px))`
+              : `translateY(${
+                  isDragging
+                    ? sheetMode === 'expanded' && dragY < 0
+                      ? 0
+                      : dragY
+                    : 0
+                }px)`,
+          transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s ease',
         }}
-        className="absolute bottom-0 left-0 right-0 z-30 bg-white rounded-t-3xl shadow-[0_-12px_40px_rgba(0,0,0,0.45)] border-t border-slate-200/90 flex flex-col max-h-[72vh] safe-bottom"
+        className={`absolute bottom-0 left-0 right-0 z-30 bg-white rounded-t-3xl shadow-[0_-12px_40px_rgba(0,0,0,0.45)] border-t border-slate-200/90 flex flex-col safe-bottom transition-all ${
+          sheetMode === 'expanded' ? 'max-h-[88vh] h-[88vh]' : 'max-h-[58vh]'
+        }`}
       >
         {/* Drag Handle & Slider Header */}
         <div
@@ -286,42 +297,99 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onMouseDown={handleMouseDown}
-          onClick={() => setIsSheetCollapsed(!isSheetCollapsed)}
-          className="w-full pt-2.5 pb-2 px-4 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing hover:bg-slate-50 transition-colors rounded-t-3xl border-b border-slate-100"
+          className="w-full pt-2.5 pb-2 px-4 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing hover:bg-slate-50 transition-colors rounded-t-3xl border-b border-slate-100 shrink-0 select-none"
         >
           {/* Slider Pill Handle */}
           <div className="w-12 h-1.5 bg-slate-300 rounded-full mb-1.5" />
 
-          {/* Interactive Drag Hint */}
-          <div className="flex items-center space-x-1 text-[11px] font-black text-slate-500 uppercase tracking-wider">
-            {isSheetCollapsed ? (
+          {/* Interactive Drag & Pull Options */}
+          <div className="w-full flex items-center justify-between text-[11px] font-black uppercase tracking-wider px-1">
+            {sheetMode === 'collapsed' ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSheetMode('normal');
+                }}
+                className="w-full flex items-center justify-center space-x-1 py-0.5 text-[#FF4800]"
+              >
+                <ChevronUp className="w-3.5 h-3.5 stroke-[3] animate-bounce" />
+                <span>Pull up for Caption &amp; Share</span>
+              </button>
+            ) : sheetMode === 'normal' ? (
               <>
-                <ChevronUp className="w-3.5 h-3.5 text-[#FF4800] stroke-[3] animate-bounce" />
-                <span className="text-[#FF4800]">Swipe up for Caption &amp; Share</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSheetMode('collapsed');
+                  }}
+                  className="flex items-center space-x-1 text-slate-500 hover:text-slate-800 active:scale-95 py-0.5 px-2 rounded-lg bg-slate-100"
+                >
+                  <ChevronDown className="w-3 h-3 stroke-[3]" />
+                  <span>Full Reel</span>
+                </button>
+
+                <span className="text-[10px] text-slate-400 font-bold">Caption &amp; Share</span>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSheetMode('expanded');
+                  }}
+                  className="flex items-center space-x-1 text-[#FF4800] hover:text-[#E63E00] active:scale-95 py-0.5 px-2 rounded-lg bg-orange-50 font-black shadow-sm"
+                >
+                  <span>Big Caption</span>
+                  <Maximize2 className="w-3 h-3 stroke-[2.5]" />
+                </button>
               </>
             ) : (
-              <>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 stroke-[3]" />
-                <span>Swipe down to view full reel</span>
-              </>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSheetMode('normal');
+                }}
+                className="w-full flex items-center justify-center space-x-1 py-0.5 text-slate-600 hover:text-slate-900 active:scale-95"
+              >
+                <ChevronDown className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Pull down to shrink caption</span>
+              </button>
             )}
           </div>
         </div>
 
-        {/* Sheet Content (When open, scrollable if needed) */}
-        <div className="p-3 sm:p-4 overflow-y-auto scrollbar-none space-y-3">
+        {/* Sheet Content (When open, scrollable) */}
+        <div className="p-3 sm:p-4 overflow-y-auto scrollbar-none space-y-3 flex-1 min-h-0">
           {/* Caption Card with char counter & style pills */}
           <div className="border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2 bg-white">
             <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
-              <span>Write a caption...</span>
-              <span className="text-slate-400">{captionText.length} chars</span>
+              <span className="font-extrabold text-slate-700">Write a caption...</span>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleCopyCaption}
+                  className="flex items-center space-x-1 text-[10px] text-[#FF4800] font-black hover:underline active:scale-95"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-500" />
+                      <span className="text-emerald-600">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+                <span className="text-slate-400">{captionText.length} chars</span>
+              </div>
             </div>
 
             <textarea
               value={captionText}
               onChange={(e) => setCaptionText(e.target.value)}
-              rows={3}
-              className="w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent border-0 p-0 focus:outline-none resize-none leading-relaxed font-medium"
+              rows={sheetMode === 'expanded' ? 7 : 3}
+              className={`w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent border-0 p-0 focus:outline-none resize-none leading-relaxed font-medium ${
+                sheetMode === 'expanded' ? 'min-h-[140px]' : ''
+              }`}
               placeholder="Write a caption for your reel..."
             />
 
@@ -396,6 +464,23 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
           >
             <Download className="w-4 h-4 stroke-[3]" />
             <span>DOWNLOAD VIDEO (.MP4)</span>
+          </button>
+
+          {/* DONE Button (Directly below Download Button) */}
+          <button
+            onClick={onNewMockup}
+            className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center justify-center space-x-2"
+          >
+            <Check className="w-4 h-4 stroke-[3] text-emerald-400" />
+            <span>DONE (CREATE NEW POST)</span>
+          </button>
+
+          {/* Subtle Back to Edit Option */}
+          <button
+            onClick={onTweakPosition}
+            className="text-[11px] font-bold text-slate-400 hover:text-slate-600 block mx-auto pt-0.5 active:scale-95"
+          >
+            ← Back to Edit Mockup
           </button>
         </div>
       </div>
