@@ -286,6 +286,11 @@ export const ProductOverlayStudio = forwardRef<
         },
       });
 
+      maxProgressRef.current = 100;
+      setRenderProgress(100);
+      setRenderMessage('Allmax video reel created!');
+      await new Promise((res) => setTimeout(res, 350));
+
       setIsRendering(false);
       onMockupGenerated(result, selectedProduct);
     } catch (err: any) {

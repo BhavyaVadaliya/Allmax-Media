@@ -440,6 +440,7 @@ async function renderVideoMockupClient({
   videoElement.currentTime = 0;
   videoElement.muted = true;
   videoElement.playsInline = true;
+  videoElement.loop = false; // MUST disable loop so playback terminates at end of video!
 
   if (videoElement.readyState < 2) {
     await new Promise<void>((resolve) => {
@@ -482,15 +483,29 @@ async function renderVideoMockupClient({
   return new Promise((resolve, reject) => {
     let animationFrameId: number;
     let isCleanedUp = false;
+    let isStopping = false;
+    let safetyTimer: NodeJS.Timeout | null = null;
+    let startTime = 0;
 
     const cleanup = () => {
       if (isCleanedUp) return;
       isCleanedUp = true;
+      if (safetyTimer) clearTimeout(safetyTimer);
       cancelAnimationFrame(animationFrameId);
       videoElement.pause();
       videoElement.currentTime = 0;
+      videoElement.loop = true; // Restore loop for preview
       if (tempContainer && tempContainer.parentNode) {
         tempContainer.parentNode.removeChild(tempContainer);
+      }
+    };
+
+    const stopRecorderSafely = () => {
+      if (isStopping) return;
+      isStopping = true;
+      if (safetyTimer) clearTimeout(safetyTimer);
+      if (recorder.state === 'recording') {
+        recorder.stop();
       }
     };
 
@@ -520,12 +535,23 @@ async function renderVideoMockupClient({
       .play()
       .then(() => {
         recorder.start(100);
+        startTime = performance.now();
+
+        // Guaranteed safety timeout: if video playback stalls or doesn't end, stop recorder!
+        safetyTimer = setTimeout(() => {
+          stopRecorderSafely();
+        }, (duration + 0.8) * 1000);
 
         const renderLoop = () => {
           if (isCleanedUp) return;
 
-          if (videoElement.ended || videoElement.currentTime >= duration) {
-            recorder.stop();
+          const elapsedSec = (performance.now() - startTime) / 1000;
+          if (
+            videoElement.ended ||
+            videoElement.currentTime >= duration - 0.1 ||
+            elapsedSec >= duration
+          ) {
+            stopRecorderSafely();
             return;
           }
 
@@ -536,13 +562,14 @@ async function renderVideoMockupClient({
           drawFittedMedia(ctx, videoElement, width, height);
           drawOverlayElements(ctx, productImage, product, config, width, height);
 
+          const effectiveTime = Math.max(videoElement.currentTime, elapsedSec);
           const progressPercent = Math.min(
-            95,
-            Math.max(25, Math.round(25 + (videoElement.currentTime / duration) * 70))
+            96,
+            Math.max(25, Math.round(25 + (effectiveTime / duration) * 70))
           );
           onProgress?.(
             progressPercent,
-            `Rendering frame: ${videoElement.currentTime.toFixed(1)}s / ${duration.toFixed(1)}s`
+            `Rendering frame: ${effectiveTime.toFixed(1)}s / ${duration.toFixed(1)}s`
           );
 
           animationFrameId = requestAnimationFrame(renderLoop);
