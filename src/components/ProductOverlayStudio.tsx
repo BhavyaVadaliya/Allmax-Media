@@ -413,32 +413,6 @@ export const ProductOverlayStudio = forwardRef<
                     />
                   )}
 
-                  {/* Tiny Playback Controls (Below OCR Banner) */}
-                  {media.type === 'video' && (
-                    <div className="absolute top-[74px] right-2.5 z-30 flex items-center space-x-1.5">
-                      <button
-                        onClick={togglePlay}
-                        className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center border border-white/20 active:scale-90"
-                      >
-                        {isPlaying ? (
-                          <Pause className="w-3 h-3" />
-                        ) : (
-                          <Play className="w-3 h-3 fill-white" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setIsMuted(!isMuted)}
-                        className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center border border-white/20 active:scale-90"
-                      >
-                        {isMuted ? (
-                          <VolumeX className="w-3 h-3 text-slate-300" />
-                        ) : (
-                          <Volume2 className="w-3 h-3 text-emerald-400" />
-                        )}
-                      </button>
-                    </div>
-                  )}
-
                   {/* LAYER 1: Top SEARCH-QUERY OCR BANNER (Animated Slide-Down) */}
                   <div
                     key={`banner-${animKey}`}
@@ -594,15 +568,43 @@ export const ProductOverlayStudio = forwardRef<
             </div>
           </div>
 
-          {/* 6/6 AI Layers Applied Status Bar */}
-          <div className="flex items-center justify-between px-1 text-[11px] font-bold">
+          {/* 6/6 AI Layers Applied Status Bar + Video Controls */}
+          <div className="flex items-center justify-between px-1 text-[11px] font-bold gap-2">
             <span className="flex items-center space-x-1.5 text-emerald-600 font-black">
               <Layers className="w-3.5 h-3.5" />
               <span>6/6 AI Layers Applied</span>
             </span>
-            <span className="text-slate-400 font-mono text-[10px]">
-              720×1280 • 30fps • Compliant
-            </span>
+            <div className="flex items-center space-x-2">
+              {previewTab === 'reel' && media.type === 'video' && (
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={togglePlay}
+                    className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center active:scale-90 transition-transform"
+                    title={isPlaying ? 'Pause' : 'Play'}
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-3 h-3" />
+                    ) : (
+                      <Play className="w-3 h-3 fill-white" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center active:scale-90 transition-transform"
+                    title={isMuted ? 'Unmute' : 'Mute'}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-3 h-3 text-slate-300" />
+                    ) : (
+                      <Volume2 className="w-3 h-3 text-emerald-400" />
+                    )}
+                  </button>
+                </div>
+              )}
+              <span className="text-slate-400 font-mono text-[10px]">
+                720×1280 • 30fps • Compliant
+              </span>
+            </div>
           </div>
 
           {/* SEO & Alt Text Card (Matches Image 2!) */}
