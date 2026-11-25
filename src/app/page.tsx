@@ -253,6 +253,10 @@ export default function HomePage() {
               <ExportPublishStep
                 renderResult={renderResult}
                 product={selectedProduct}
+                selectedHook={selectedHook}
+                promoCode={profile.promoCode}
+                creatorHandle={profile.handle}
+                onGoToStep1={() => setCurrentStep(1)}
                 onTweakPosition={() => setCurrentStep(2)}
                 onNewMockup={handleResetToHome}
               />
