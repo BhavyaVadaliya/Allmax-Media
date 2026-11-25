@@ -58,6 +58,11 @@ export interface OverlayConfig {
   showBadge: boolean;
   ctaText?: string;
   showCta: boolean;
+  // Step 2: Package 3-Layer Overlays
+  ocrBannerTitle?: string;
+  kineticSubtitle?: string;
+  promoCodeText?: string;
+  creatorHandle?: string;
 }
 
 export interface RenderResult {

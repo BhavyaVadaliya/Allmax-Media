@@ -233,6 +233,9 @@ export default function HomePage() {
                 ref={studioRef}
                 media={selectedMedia}
                 initialProduct={selectedProduct}
+                selectedHook={selectedHook}
+                promoCode={profile.promoCode}
+                creatorHandle={profile.handle}
                 onMockupGenerated={handleMockupGenerated}
                 onBackToMedia={() => {
                   if (isRendering) return;

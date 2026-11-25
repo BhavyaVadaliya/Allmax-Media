@@ -280,6 +280,108 @@ export function drawOverlayElements(
   }
 
   ctx.restore();
+
+  // =========================================================================
+  // Step 2 Package 3-Layer Overlays (OCR Banner, Kinetic Subtitle, Promo Lockup)
+  // =========================================================================
+  const s = Math.min(canvasWidth, canvasHeight) / 720;
+
+  // 1. Top SEARCH-QUERY OCR BANNER
+  if (config.ocrBannerTitle) {
+    ctx.save();
+    const bannerW = canvasWidth * 0.88;
+    const bannerH = Math.round(78 * s);
+    const bannerX = (canvasWidth - bannerW) / 2;
+    const bannerY = Math.round(52 * s);
+
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+    ctx.shadowBlur = 18 * s;
+    ctx.shadowOffsetY = 6 * s;
+
+    // White rounded card with orange bottom accent
+    ctx.fillStyle = '#FFFFFF';
+    roundRect(ctx, bannerX, bannerY, bannerW, bannerH, 18 * s);
+    ctx.fill();
+
+    ctx.shadowColor = 'transparent';
+    ctx.fillStyle = '#FF4800';
+    roundRect(ctx, bannerX, bannerY + bannerH - 5 * s, bannerW, 5 * s, 3 * s);
+    ctx.fill();
+
+    ctx.fillStyle = '#FF4800';
+    ctx.font = `900 ${Math.round(11 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('SEARCH-QUERY OCR BANNER', canvasWidth / 2, bannerY + 24 * s);
+
+    ctx.fillStyle = '#0F172A';
+    ctx.font = `900 ${Math.round(20 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.fillText(config.ocrBannerTitle.toUpperCase().slice(0, 36), canvasWidth / 2, bannerY + 50 * s);
+    ctx.restore();
+  }
+
+  // 2. Center Kinetic Subtitle Box
+  if (config.kineticSubtitle) {
+    ctx.save();
+    const subW = canvasWidth * 0.86;
+    const subH = Math.round(72 * s);
+    const subX = (canvasWidth - subW) / 2;
+    const subY = Math.round(canvasHeight * 0.45);
+
+    ctx.fillStyle = 'rgba(10, 13, 22, 0.78)';
+    roundRect(ctx, subX, subY, subW, subH, 16 * s);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.65)';
+    ctx.lineWidth = 1.5 * s;
+    roundRect(ctx, subX, subY, subW, subH, 16 * s);
+    ctx.stroke();
+
+    ctx.fillStyle = '#FBBF24';
+    ctx.font = `900 ${Math.round(16 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const quote = `"${config.kineticSubtitle.toUpperCase()}"`;
+    if (quote.length > 44) {
+      const mid = quote.lastIndexOf(' ', Math.floor(quote.length / 2));
+      const line1 = quote.slice(0, mid > 0 ? mid : 42);
+      const line2 = quote.slice(mid > 0 ? mid + 1 : 42);
+      ctx.fillText(line1, canvasWidth / 2, subY + 25 * s);
+      ctx.fillText(line2, canvasWidth / 2, subY + 47 * s);
+    } else {
+      ctx.fillText(quote, canvasWidth / 2, subY + subH / 2);
+    }
+    ctx.restore();
+  }
+
+  // 3. Bottom ATHLETE PROMO LOCKUP
+  if (config.promoCodeText) {
+    ctx.save();
+    const lockW = Math.round(280 * s);
+    const lockH = Math.round(58 * s);
+    const lockX = Math.round(canvasWidth * 0.34);
+    const lockY = Math.round(canvasHeight - 135 * s);
+
+    ctx.fillStyle = 'rgba(10, 13, 22, 0.88)';
+    roundRect(ctx, lockX, lockY, lockW, lockH, 14 * s);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+    ctx.lineWidth = 1.2 * s;
+    roundRect(ctx, lockX, lockY, lockW, lockH, 14 * s);
+    ctx.stroke();
+
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = `800 ${Math.round(10 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ATHLETE PROMO LOCKUP', lockX + 14 * s, lockY + 18 * s);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 ${Math.round(15 * s)}px monospace`;
+    ctx.fillText(`CODE: ${config.promoCodeText}`, lockX + 14 * s, lockY + 40 * s);
+    ctx.restore();
+  }
 }
 
 function roundRect(
