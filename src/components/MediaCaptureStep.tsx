@@ -16,6 +16,7 @@ import {
   Pause,
   ArrowRight,
   Film,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { MediaItem } from '@/types';
 import { SAMPLE_CREATOR_MEDIA } from '@/data/allmaxProducts';
@@ -37,6 +38,10 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [demoTab, setDemoTab] = useState<'video' | 'image'>('video');
+
+  const demoVideos = SAMPLE_CREATOR_MEDIA.filter((item) => item.type === 'video');
+  const demoImages = SAMPLE_CREATOR_MEDIA.filter((item) => item.type === 'image');
 
   const liveCameraRef = useRef<HTMLVideoElement | null>(null);
   const previewVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -302,18 +307,46 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
             </button>
           </div>
 
-          {/* Or Try 1-Tap Demo Clips Section */}
+          {/* Separate 1-Tap Demo Videos & Demo Images Section */}
           <div className="space-y-2">
-            <span className="text-xs font-black text-slate-900 block px-0.5">
-              Or Try 1-Tap Demo Clips
-            </span>
+            <div className="flex items-center justify-between px-0.5">
+              <span className="text-xs font-black text-slate-900">
+                Or Try 1-Tap Demo Media
+              </span>
 
-            <div className="grid grid-cols-3 gap-2">
-              {SAMPLE_CREATOR_MEDIA.slice(0, 3).map((item) => (
+              {/* Separate Videos vs Images Segmented Toggle */}
+              <div className="inline-flex rounded-xl bg-slate-100 p-0.5 border border-slate-200">
+                <button
+                  onClick={() => setDemoTab('video')}
+                  className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                    demoTab === 'video'
+                      ? 'bg-[#FF4800] text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Video className="w-3 h-3" />
+                  <span>Videos ({demoVideos.length})</span>
+                </button>
+                <button
+                  onClick={() => setDemoTab('image')}
+                  className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                    demoTab === 'image'
+                      ? 'bg-[#FF4800] text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <ImageIcon className="w-3 h-3" />
+                  <span>Images ({demoImages.length})</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex space-x-2 overflow-x-auto scrollbar-none pb-0.5">
+              {(demoTab === 'video' ? demoVideos : demoImages).map((item) => (
                 <button
                   key={item.id}
                   onClick={() => onMediaSelected(item)}
-                  className="relative aspect-[9/14] rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm group active:scale-95 transition-transform"
+                  className="relative w-[29%] shrink-0 aspect-[9/14] rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm group active:scale-95 transition-transform"
                 >
                   {/* Thumbnail / Video */}
                   {item.thumbnail ? (
@@ -332,10 +365,19 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
                     />
                   )}
 
+                  {/* Type Badge Top-Right */}
+                  <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                    {item.type === 'video' ? (
+                      <Play className="w-2.5 h-2.5 text-white fill-white" />
+                    ) : (
+                      <ImageIcon className="w-2.5 h-2.5 text-white" />
+                    )}
+                  </div>
+
                   {/* Dark gradient overlay + Label */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex items-end p-1.5">
                     <span className="text-[9px] font-black text-white leading-tight line-clamp-2 text-left">
-                      {item.name.replace(' Workout', '').replace(' Heavy Session', '')}
+                      {item.name}
                     </span>
                   </div>
                 </button>

@@ -14,12 +14,12 @@ interface RenderOptions {
 export async function renderMockupMedia(options: RenderOptions): Promise<RenderResult> {
   const { mediaElement, mediaItem, mediaType, product, config, onProgress, aspectRatio = '9:16' } = options;
 
-  let targetWidth = 1080;
-  let targetHeight = 1920;
+  let targetWidth = 720;
+  let targetHeight = 1280;
 
   if (aspectRatio === '16:9') {
-    targetWidth = 1920;
-    targetHeight = 1080;
+    targetWidth = 1280;
+    targetHeight = 720;
   } else if (aspectRatio === '1:1') {
     targetWidth = 1080;
     targetHeight = 1080;
@@ -417,16 +417,17 @@ async function renderVideoMockupClient({
   height: number;
   onProgress?: (progress: number, step: string) => void;
 }): Promise<RenderResult> {
-  // Ensure video element is connected to DOM to avoid browser throttling
+  // Ensure video element is connected to DOM without browser offscreen throttling
   let tempContainer: HTMLDivElement | null = null;
   if (!videoElement.isConnected) {
     tempContainer = document.createElement('div');
     tempContainer.style.position = 'fixed';
-    tempContainer.style.top = '-9999px';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.width = '300px';
-    tempContainer.style.height = '300px';
-    tempContainer.style.opacity = '0';
+    tempContainer.style.top = '0';
+    tempContainer.style.left = '0';
+    tempContainer.style.width = '2px';
+    tempContainer.style.height = '2px';
+    tempContainer.style.opacity = '0.01';
+    tempContainer.style.zIndex = '-1';
     tempContainer.style.pointerEvents = 'none';
     tempContainer.appendChild(videoElement);
     document.body.appendChild(tempContainer);
@@ -435,7 +436,7 @@ async function renderVideoMockupClient({
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { alpha: false });
   if (!ctx) throw new Error('Could not initialize 2D canvas context');
 
   videoElement.currentTime = 0;
@@ -464,6 +465,36 @@ async function renderVideoMockupClient({
   // Enable high-quality canvas smoothing
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
+
+  // Pre-cache the static product overlay (tub + shadowBlur + glow + badge + CTA) ONCE
+  // so the 30fps render loop does a single fast GPU blit instead of re-rasterizing SVGs & shadows every frame!
+  const overlayCacheCanvas = document.createElement('canvas');
+  overlayCacheCanvas.width = width;
+  overlayCacheCanvas.height = height;
+  const overlayCacheCtx = overlayCacheCanvas.getContext('2d');
+  if (overlayCacheCtx) {
+    overlayCacheCtx.imageSmoothingEnabled = true;
+    overlayCacheCtx.imageSmoothingQuality = 'high';
+    drawOverlayElements(overlayCacheCtx, productImage, product, config, width, height);
+  }
+
+  // Pre-cache the outro hero tub with its ambient glow ONCE
+  const s = Math.min(width, height) / 720;
+  const isLandscape = width > height;
+  const maxTubH = Math.round((isLandscape ? 270 : 310) * s);
+  const maxTubW = Math.round(maxTubH * (400 / 520));
+  const tubPad = Math.round(48 * s);
+  const outroTubCanvas = document.createElement('canvas');
+  outroTubCanvas.width = maxTubW + tubPad * 2;
+  outroTubCanvas.height = maxTubH + tubPad * 2;
+  const outroTubCtx = outroTubCanvas.getContext('2d');
+  if (outroTubCtx) {
+    outroTubCtx.imageSmoothingEnabled = true;
+    outroTubCtx.imageSmoothingQuality = 'high';
+    outroTubCtx.shadowColor = product.accentColor || '#FF4800';
+    outroTubCtx.shadowBlur = 32 * s;
+    outroTubCtx.drawImage(productImage, tubPad, tubPad, maxTubW, maxTubH);
+  }
 
   // Pre-render ultra-crisp 512px scannable QR code for the product/website onto an offscreen canvas
   const qrCanvas = document.createElement('canvas');
@@ -497,7 +528,7 @@ async function renderVideoMockupClient({
 
   const recorder = new MediaRecorder(canvasStream, {
     mimeType,
-    videoBitsPerSecond: 10_000_000,
+    videoBitsPerSecond: 6_000_000,
   });
 
   const chunks: Blob[] = [];
@@ -561,7 +592,7 @@ async function renderVideoMockupClient({
     videoElement
       .play()
       .then(() => {
-        recorder.start(100);
+        recorder.start(1000);
         startTime = performance.now();
 
         // Guaranteed safety timeout covering video + outro duration
@@ -580,13 +611,13 @@ async function renderVideoMockupClient({
           }
 
           if (elapsedSec < videoDuration && !videoElement.ended) {
-            // Phase 1: Main workout video + product sticker overlay
+            // Phase 1: Main workout video + cached product sticker overlay
             if (videoElement.paused) {
               videoElement.play().catch(() => {});
             }
 
             drawFittedMedia(ctx, videoElement, width, height);
-            drawOverlayElements(ctx, productImage, product, config, width, height);
+            ctx.drawImage(overlayCacheCanvas, 0, 0);
 
             const effectiveTime = Math.max(videoElement.currentTime, elapsedSec);
             const progressPercent = Math.min(
@@ -612,7 +643,7 @@ async function renderVideoMockupClient({
             drawOutroFrame({
               ctx,
               product,
-              productImage,
+              outroTubCanvas,
               qrCanvas,
               outroTime,
               outroDuration,
@@ -656,7 +687,7 @@ function easeOutBack(t: number): number {
 function drawOutroFrame({
   ctx,
   product,
-  productImage,
+  outroTubCanvas,
   qrCanvas,
   outroTime,
   outroDuration,
@@ -666,7 +697,7 @@ function drawOutroFrame({
 }: {
   ctx: CanvasRenderingContext2D;
   product: AllmaxProduct;
-  productImage: HTMLImageElement;
+  outroTubCanvas: HTMLCanvasElement;
   qrCanvas: HTMLCanvasElement;
   outroTime: number;
   outroDuration: number;
@@ -772,23 +803,22 @@ function drawOutroFrame({
   const qrCenterX = isLandscape ? width * 0.68 : centerX;
   const qrCenterY = isLandscape ? height * 0.54 : height * 0.69;
 
-  // 3. Hero Product Tub with bounce-in & gentle float (0.18s -> 0.68s)
+  // 3. Hero Product Tub with bounce-in & gentle float (0.18s -> 0.68s) using cached GPU blit
   const tubT = easeOutBack((outroTime - 0.18) / 0.5);
   if (tubT > 0) {
     ctx.save();
     const floatY = Math.sin(outroTime * 3.5) * 6 * s;
-    const tubH = (isLandscape ? 270 : 310) * s * Math.max(0.01, tubT);
-    const tubW = tubH * (400 / 520);
+    const scaleT = Math.max(0.01, tubT);
+    const drawW = outroTubCanvas.width * scaleT;
+    const drawH = outroTubCanvas.height * scaleT;
 
     ctx.globalAlpha = bgFade * Math.min(1, tubT * 1.4);
-    ctx.shadowColor = product.accentColor || '#FF4800';
-    ctx.shadowBlur = 32 * s;
     ctx.drawImage(
-      productImage,
-      tubCenterX - tubW / 2,
-      tubCenterY - tubH / 2 + floatY,
-      tubW,
-      tubH
+      outroTubCanvas,
+      tubCenterX - drawW / 2,
+      tubCenterY - drawH / 2 + floatY,
+      drawW,
+      drawH
     );
     ctx.restore();
   }

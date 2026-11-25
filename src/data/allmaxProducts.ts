@@ -384,9 +384,10 @@ export const ALLMAX_PRODUCTS: AllmaxProduct[] = [
 
 // Curated Gym / Creator sample media for instant testing without camera or file upload
 export const SAMPLE_CREATOR_MEDIA = [
+  // Videos
   {
     id: 'sample-1',
-    name: 'Barbell Bench Press Workout',
+    name: 'Barbell Bench Press',
     type: 'video' as const,
     sourceType: 'sample' as const,
     url: '/samples/workout1.mp4',
@@ -396,7 +397,7 @@ export const SAMPLE_CREATOR_MEDIA = [
   },
   {
     id: 'sample-2',
-    name: 'Barbell Squat Heavy Session',
+    name: 'Barbell Squat',
     type: 'video' as const,
     sourceType: 'sample' as const,
     url: '/samples/workout2.mp4',
@@ -405,8 +406,29 @@ export const SAMPLE_CREATOR_MEDIA = [
     duration: 6,
   },
   {
+    id: 'sample-v3',
+    name: 'Bench Press Close-Up',
+    type: 'video' as const,
+    sourceType: 'sample' as const,
+    url: '/samples/workout3.mp4',
+    thumbnail: '/samples/thumb3.jpg',
+    description: 'Dynamic close-up chest press highlight',
+    duration: 5.5,
+  },
+  {
+    id: 'sample-v4',
+    name: 'Heavy Squat Power',
+    type: 'video' as const,
+    sourceType: 'sample' as const,
+    url: '/samples/workout4.mp4',
+    thumbnail: '/samples/thumb4.jpg',
+    description: 'High-contrast leg day power squat reel',
+    duration: 5.5,
+  },
+  // Images
+  {
     id: 'sample-3',
-    name: 'Post-Workout Shaker Shot',
+    name: 'Post-Workout Shot',
     type: 'image' as const,
     sourceType: 'sample' as const,
     url: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1080&q=85',
@@ -415,12 +437,30 @@ export const SAMPLE_CREATOR_MEDIA = [
   },
   {
     id: 'sample-4',
-    name: 'Fitness Training Studio',
+    name: 'Barbell Studio Floor',
     type: 'image' as const,
     sourceType: 'sample' as const,
     url: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=1080&q=85',
     thumbnail: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=600&q=80',
     description: 'Athletic barbell & weights floor stage',
+  },
+  {
+    id: 'sample-i3',
+    name: 'Dumbbell Rack Gym',
+    type: 'image' as const,
+    sourceType: 'sample' as const,
+    url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1080&q=85',
+    thumbnail: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80',
+    description: 'Modern gym dumbbell rack backdrop',
+  },
+  {
+    id: 'sample-i4',
+    name: 'Athlete Strength Focus',
+    type: 'image' as const,
+    sourceType: 'sample' as const,
+    url: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1080&q=85',
+    thumbnail: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=600&q=80',
+    description: 'High-intensity gym training portrait',
   },
 ];
 
