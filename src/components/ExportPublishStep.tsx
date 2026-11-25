@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   RenderResult,
   AllmaxProduct,
@@ -46,6 +46,16 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
   const [showReelPreview, setShowReelPreview] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [publishDone, setPublishDone] = useState<boolean>(false);
+  const [previewCurrentTime, setPreviewCurrentTime] = useState<number>(0);
+  const [previewDuration, setPreviewDuration] = useState<number>(0);
+  const previewVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  const formatTime = (sec: number) => {
+    if (!Number.isFinite(sec) || sec < 0) return '0:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   const hookTitle = selectedHook?.title || 'POST-WORKOUT RECOVERY HACK!';
   const promoShort = promoCode.split('•')[0].trim() || 'ALEX15';
@@ -346,15 +356,26 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-sm aspect-[9/16] max-h-[82vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/20"
+            className="group relative w-full max-w-sm aspect-[9/16] max-h-[82vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/20"
           >
             {renderResult.mediaType === 'video' ? (
               <video
+                ref={previewVideoRef}
                 src={renderResult.url}
                 autoPlay
                 loop
                 muted={isMuted}
                 playsInline
+                onLoadedMetadata={(e) => {
+                  setPreviewDuration(e.currentTarget.duration || 0);
+                  setPreviewCurrentTime(0);
+                }}
+                onTimeUpdate={(e) => {
+                  setPreviewCurrentTime(e.currentTarget.currentTime);
+                  if (e.currentTarget.duration && previewDuration !== e.currentTarget.duration) {
+                    setPreviewDuration(e.currentTarget.duration);
+                  }
+                }}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -364,6 +385,38 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
                 alt="Final Mockup"
                 className="w-full h-full object-cover"
               />
+            )}
+
+            {/* Hover Progress Bar + Reel Time */}
+            {renderResult.mediaType === 'video' && (
+              <div className="absolute inset-x-0 bottom-0 z-20 px-3.5 pb-3 pt-8 bg-gradient-to-t from-black/85 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="flex items-center justify-between text-[11px] font-mono font-bold text-white/90 mb-1.5">
+                  <span>{formatTime(previewCurrentTime)}</span>
+                  <span>{formatTime(previewDuration)}</span>
+                </div>
+                <div
+                  onClick={(e) => {
+                    const video = previewVideoRef.current;
+                    if (!video || !previewDuration) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    video.currentTime = pct * previewDuration;
+                    setPreviewCurrentTime(video.currentTime);
+                  }}
+                  className="w-full h-1.5 bg-white/25 rounded-full overflow-hidden cursor-pointer"
+                >
+                  <div
+                    className="h-full bg-[#FF4800] rounded-full transition-[width] duration-75"
+                    style={{
+                      width: `${
+                        previewDuration > 0
+                          ? Math.min(100, (previewCurrentTime / previewDuration) * 100)
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
             )}
 
             <div className="absolute top-3 right-3 flex items-center space-x-2">
