@@ -96,3 +96,11 @@ export interface PostHistoryItem {
   saves: number;
   codeUses: number;
 }
+
+export interface SearchIntentHook {
+  id: string;
+  query: string;
+  title: string;
+  script: string;
+  highlightPhrase?: string;
+}

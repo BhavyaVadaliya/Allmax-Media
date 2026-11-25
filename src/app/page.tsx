@@ -14,6 +14,7 @@ import {
   RenderResult,
   CreatorProfile,
   PostHistoryItem,
+  SearchIntentHook,
 } from '@/types';
 import { ALLMAX_PRODUCTS } from '@/data/allmaxProducts';
 
@@ -61,6 +62,7 @@ export default function HomePage() {
 
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<AllmaxProduct>(ALLMAX_PRODUCTS[0]);
+  const [selectedHook, setSelectedHook] = useState<SearchIntentHook | null>(null);
   const [renderResult, setRenderResult] = useState<RenderResult | null>(null);
 
   const [isRendering, setIsRendering] = useState<boolean>(false);
@@ -202,12 +204,18 @@ export default function HomePage() {
           />
 
           <main className="flex-1 min-h-0 w-full max-w-lg mx-auto flex flex-col overflow-hidden">
-            {/* Step 1: Media Capture or Selection */}
+            {/* Step 1: Media Capture or Selection (1.1 SKU -> 1.2 Hook -> 1.3 Clip) */}
             {currentStep === 1 && (
               <MediaCaptureStep
                 selectedMedia={selectedMedia}
                 onMediaSelected={handleMediaSelected}
+                selectedProduct={selectedProduct}
+                onSelectProduct={setSelectedProduct}
+                selectedHook={selectedHook}
+                onSelectHook={setSelectedHook}
+                promoCode={profile.promoCode}
                 onProceedToStudio={handleProceedToStudio}
+                onGoHome={() => setActiveView('home')}
               />
             )}
 
@@ -216,6 +224,7 @@ export default function HomePage() {
               <ProductOverlayStudio
                 ref={studioRef}
                 media={selectedMedia}
+                initialProduct={selectedProduct}
                 onMockupGenerated={handleMockupGenerated}
                 onBackToMedia={() => {
                   if (isRendering) return;

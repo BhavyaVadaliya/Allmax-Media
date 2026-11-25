@@ -37,6 +37,7 @@ export interface ProductOverlayStudioRef {
 
 interface ProductOverlayStudioProps {
   media: MediaItem;
+  initialProduct?: AllmaxProduct;
   onMockupGenerated: (result: RenderResult, product: AllmaxProduct) => void;
   onBackToMedia: () => void;
   onRenderingChange?: (isRendering: boolean, progress: number) => void;
@@ -47,8 +48,10 @@ const CATEGORIES = ['All', 'Protein', 'Pre-Workout', 'Creatine & Performance'];
 export const ProductOverlayStudio = forwardRef<
   ProductOverlayStudioRef,
   ProductOverlayStudioProps
->(({ media, onMockupGenerated, onBackToMedia, onRenderingChange }, ref) => {
-  const [selectedProduct, setSelectedProduct] = useState<AllmaxProduct>(ALLMAX_PRODUCTS[0]);
+>(({ media, initialProduct, onMockupGenerated, onBackToMedia, onRenderingChange }, ref) => {
+  const [selectedProduct, setSelectedProduct] = useState<AllmaxProduct>(
+    initialProduct || ALLMAX_PRODUCTS[0]
+  );
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
@@ -56,7 +59,7 @@ export const ProductOverlayStudio = forwardRef<
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [config, setConfig] = useState<OverlayConfig>({
-    productId: ALLMAX_PRODUCTS[0].id,
+    productId: (initialProduct || ALLMAX_PRODUCTS[0]).id,
     x: 75,
     y: 75,
     scale: 0.32,
