@@ -644,7 +644,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
             /* Media Selected State */
             <div className="flex-1 min-h-0 flex flex-col justify-between overflow-hidden">
               <div className="flex-1 min-h-0 relative flex items-center justify-center p-2">
-                <div className="relative h-full aspect-[9/16] max-h-[65vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200 w-full">
+                <div className="relative h-full aspect-[9/16] max-h-[65vh] w-auto max-w-full bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-200">
                   {selectedMedia.type === 'video' ? (
                     <video
                       key={selectedMedia.url}
