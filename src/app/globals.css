@@ -92,3 +92,87 @@ input[type="range"]::-webkit-slider-thumb:hover,
 input[type="range"]::-webkit-slider-thumb:active {
   transform: scale(1.15);
 }
+
+/* App Intro Splash Animations */
+@keyframes introPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.45) rotate(-8deg);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes introRing {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+}
+
+@keyframes introSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes introProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes introGlow {
+  0%, 100% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+.animate-intro-pop {
+  animation: introPop 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-intro-ring {
+  animation: introRing 1.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.animate-intro-slide-up {
+  opacity: 0;
+  animation: introSlideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.28s forwards;
+}
+
+.animate-intro-fade {
+  opacity: 0;
+  animation: introSlideUp 0.55s ease-out 0.6s forwards;
+}
+
+.animate-intro-progress {
+  animation: introProgress 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-intro-glow {
+  animation: introGlow 2.4s ease-in-out infinite;
+}

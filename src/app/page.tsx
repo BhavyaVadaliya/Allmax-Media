@@ -6,10 +6,12 @@ import { MediaCaptureStep } from '@/components/MediaCaptureStep';
 import { ProductOverlayStudio, ProductOverlayStudioRef } from '@/components/ProductOverlayStudio';
 import { ExportPublishStep } from '@/components/ExportPublishStep';
 import { MobileAppModal } from '@/components/MobileAppModal';
+import { AppIntroSplash } from '@/components/AppIntroSplash';
 import { MediaItem, AllmaxProduct, RenderResult } from '@/types';
 import { ALLMAX_PRODUCTS } from '@/data/allmaxProducts';
 
 export default function HomePage() {
+  const [showIntro, setShowIntro] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
 
@@ -67,6 +69,7 @@ export default function HomePage() {
 
   return (
     <div className="h-full w-full flex flex-col bg-white text-slate-900 overflow-hidden select-none">
+      {showIntro && <AppIntroSplash onComplete={() => setShowIntro(false)} />}
       <Navbar
         currentStep={currentStep}
         onStepClick={(step) => {
