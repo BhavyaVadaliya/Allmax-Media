@@ -384,7 +384,7 @@ export const ALLMAX_PRODUCTS: AllmaxProduct[] = [
 
 // Curated Gym / Creator sample media for instant testing without camera or file upload
 export const SAMPLE_CREATOR_MEDIA = [
-  // Videos
+  // Videos (4 distinct workout exercises)
   {
     id: 'sample-1',
     name: 'Barbell Bench Press',
@@ -407,25 +407,25 @@ export const SAMPLE_CREATOR_MEDIA = [
   },
   {
     id: 'sample-v3',
-    name: 'Bench Press Close-Up',
+    name: 'Barbell Deadlift',
     type: 'video' as const,
     sourceType: 'sample' as const,
     url: '/samples/workout3.mp4',
     thumbnail: '/samples/thumb3.jpg',
-    description: 'Dynamic close-up chest press highlight',
-    duration: 5.5,
+    description: 'Strength athlete barbell deadlift demonstration',
+    duration: 6,
   },
   {
     id: 'sample-v4',
-    name: 'Heavy Squat Power',
+    name: 'Shoulder Press',
     type: 'video' as const,
     sourceType: 'sample' as const,
     url: '/samples/workout4.mp4',
     thumbnail: '/samples/thumb4.jpg',
-    description: 'High-contrast leg day power squat reel',
-    duration: 5.5,
+    description: 'Overhead barbell shoulder press workout',
+    duration: 6,
   },
-  // Images
+  // Images (6 distinct gym & fitness photos)
   {
     id: 'sample-3',
     name: 'Post-Workout Shot',
@@ -461,6 +461,24 @@ export const SAMPLE_CREATOR_MEDIA = [
     url: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1080&q=85',
     thumbnail: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=600&q=80',
     description: 'High-intensity gym training portrait',
+  },
+  {
+    id: 'sample-i5',
+    name: 'Kettlebell & Rope Zone',
+    type: 'image' as const,
+    sourceType: 'sample' as const,
+    url: 'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?auto=format&fit=crop&w=1080&q=85',
+    thumbnail: 'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?auto=format&fit=crop&w=600&q=80',
+    description: 'Functional conditioning gym floor',
+  },
+  {
+    id: 'sample-i6',
+    name: 'Heavy Plates Rack',
+    type: 'image' as const,
+    sourceType: 'sample' as const,
+    url: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1080&q=85',
+    thumbnail: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=600&q=80',
+    description: 'Weightlifting pull-up & plates station',
   },
 ];
 

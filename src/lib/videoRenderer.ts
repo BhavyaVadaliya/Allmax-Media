@@ -459,7 +459,7 @@ async function renderVideoMockupClient({
     videoElement.duration && !isNaN(videoElement.duration) ? videoElement.duration : 6,
     30
   );
-  const outroDuration = 4.5;
+  const outroDuration = 7.0;
   const totalDuration = videoDuration + outroDuration;
 
   // Enable high-quality canvas smoothing
