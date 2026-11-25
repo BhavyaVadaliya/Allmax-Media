@@ -34,7 +34,7 @@ export const PostHistoryScreen: React.FC<PostHistoryScreenProps> = ({
   };
 
   return (
-    <div className="h-full w-full bg-[#F8FAFC] text-slate-900 flex flex-col overflow-hidden select-none safe-bottom">
+    <div className="h-full w-full bg-[#F8FAFC] text-slate-900 flex flex-col overflow-hidden select-none">
       {/* Unified Top Header */}
       <header className="shrink-0 bg-white border-b border-slate-200 safe-top">
         <div className="px-4 py-3 flex items-center justify-between max-w-lg w-full mx-auto">
@@ -155,17 +155,18 @@ export const PostHistoryScreen: React.FC<PostHistoryScreenProps> = ({
             );
           })}
         </div>
-        {/* Bottom Back to Home Button */}
-        <div className="pb-4">
-          <button
-            onClick={onGoHome}
-            className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center justify-center space-x-2"
-          >
-            <Home className="w-4 h-4 text-[#FF4800]" />
-            <span>Back to Home</span>
-          </button>
-        </div>
       </main>
+
+      {/* Sticky Bottom Back to Home Bar */}
+      <div className="shrink-0 bg-white border-t border-slate-200 p-3 safe-bottom max-w-lg w-full mx-auto">
+        <button
+          onClick={onGoHome}
+          className="w-full py-3.5 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center justify-center space-x-2"
+        >
+          <Home className="w-4 h-4 text-[#FF4800]" />
+          <span>Back to Home</span>
+        </button>
+      </div>
     </div>
   );
 };
