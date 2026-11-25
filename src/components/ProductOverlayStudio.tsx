@@ -375,7 +375,7 @@ export const ProductOverlayStudio = forwardRef<
           <div className="flex justify-center">
             <div
               ref={containerRef}
-              className="relative w-full aspect-[9/14] max-h-[54vh] bg-black rounded-3xl overflow-hidden shadow-xl border border-slate-200"
+              className="relative aspect-[9/16] h-[58vh] max-h-[580px] w-auto max-w-full bg-black rounded-3xl overflow-hidden shadow-xl border border-slate-200"
             >
               {previewTab === 'reel' ? (
                 <>
@@ -399,9 +399,9 @@ export const ProductOverlayStudio = forwardRef<
                     />
                   )}
 
-                  {/* Top-Right Tiny Playback Controls */}
+                  {/* Tiny Playback Controls (Below OCR Banner) */}
                   {media.type === 'video' && (
-                    <div className="absolute bottom-11 right-2.5 z-30 flex items-center space-x-1.5">
+                    <div className="absolute top-[74px] right-2.5 z-30 flex items-center space-x-1.5">
                       <button
                         onClick={togglePlay}
                         className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center border border-white/20 active:scale-90"
@@ -483,7 +483,7 @@ export const ProductOverlayStudio = forwardRef<
                   {/* LAYER 3B: Bottom ATHLETE PROMO LOCKUP (Animated Slide-In) */}
                   <div
                     key={`promo-${animKey}`}
-                    className="absolute bottom-9 left-[30%] right-12 z-20 rounded-xl bg-black/85 backdrop-blur-md border border-white/15 px-3 py-1.5 pointer-events-none shadow-lg animate-reel-promo"
+                    className="absolute bottom-9 left-[32%] right-2.5 z-20 rounded-xl bg-black/85 backdrop-blur-md border border-white/15 px-2.5 py-1.5 pointer-events-none shadow-lg animate-reel-promo"
                   >
                     <span className="text-[8px] font-bold tracking-wider text-slate-400 uppercase block">
                       ATHLETE PROMO LOCKUP
