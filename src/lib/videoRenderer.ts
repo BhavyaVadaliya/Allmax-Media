@@ -1,4 +1,5 @@
 import { OverlayConfig, AllmaxProduct, RenderResult, MediaType, MediaItem } from '@/types';
+import QRCode from 'qrcode';
 
 interface RenderOptions {
   mediaElement: HTMLVideoElement | HTMLImageElement;
@@ -453,10 +454,32 @@ async function renderVideoMockupClient({
     });
   }
 
-  const duration = Math.min(
+  const videoDuration = Math.min(
     videoElement.duration && !isNaN(videoElement.duration) ? videoElement.duration : 6,
     30
   );
+  const outroDuration = 2.8;
+  const totalDuration = videoDuration + outroDuration;
+
+  // Pre-render high-res scannable QR code for the product/website onto an offscreen canvas
+  const qrCanvas = document.createElement('canvas');
+  const qrTargetUrl = product.allmaxUrl || 'https://www.allmaxnutrition.com';
+  await QRCode.toCanvas(qrCanvas, qrTargetUrl, {
+    width: 240,
+    margin: 1,
+    color: {
+      dark: '#0A0D16',
+      light: '#FFFFFF',
+    },
+    errorCorrectionLevel: 'M',
+  });
+
+  // Offscreen canvas to hold the final video frame for a smooth cross-fade into the outro
+  const lastFrameCanvas = document.createElement('canvas');
+  lastFrameCanvas.width = width;
+  lastFrameCanvas.height = height;
+  const lastFrameCtx = lastFrameCanvas.getContext('2d');
+  let hasCapturedLastFrame = false;
 
   const canvasStream = canvas.captureStream(30);
 
@@ -521,7 +544,7 @@ async function renderVideoMockupClient({
         mediaType: 'video',
         filename: `Allmax_${product.name.replace(/\s+/g, '_')}_Video.${ext}`,
         sizeBytes: blob.size,
-        durationSeconds: duration,
+        durationSeconds: totalDuration,
       });
     };
 
@@ -537,40 +560,70 @@ async function renderVideoMockupClient({
         recorder.start(100);
         startTime = performance.now();
 
-        // Guaranteed safety timeout: if video playback stalls or doesn't end, stop recorder!
+        // Guaranteed safety timeout covering video + outro duration
         safetyTimer = setTimeout(() => {
           stopRecorderSafely();
-        }, (duration + 0.8) * 1000);
+        }, (totalDuration + 1.2) * 1000);
 
         const renderLoop = () => {
           if (isCleanedUp) return;
 
           const elapsedSec = (performance.now() - startTime) / 1000;
-          if (
-            videoElement.ended ||
-            videoElement.currentTime >= duration - 0.1 ||
-            elapsedSec >= duration
-          ) {
+
+          if (elapsedSec >= totalDuration) {
             stopRecorderSafely();
             return;
           }
 
-          if (videoElement.paused && !videoElement.ended) {
-            videoElement.play().catch(() => {});
+          if (elapsedSec < videoDuration && !videoElement.ended) {
+            // Phase 1: Main workout video + product sticker overlay
+            if (videoElement.paused) {
+              videoElement.play().catch(() => {});
+            }
+
+            drawFittedMedia(ctx, videoElement, width, height);
+            drawOverlayElements(ctx, productImage, product, config, width, height);
+
+            const effectiveTime = Math.max(videoElement.currentTime, elapsedSec);
+            const progressPercent = Math.min(
+              75,
+              Math.max(25, Math.round(25 + (effectiveTime / videoDuration) * 50))
+            );
+            onProgress?.(
+              progressPercent,
+              `Rendering frame: ${effectiveTime.toFixed(1)}s / ${totalDuration.toFixed(1)}s`
+            );
+          } else {
+            // Capture the last rendered video frame once for smooth cross-fade into outro
+            if (!hasCapturedLastFrame && lastFrameCtx) {
+              lastFrameCtx.drawImage(canvas, 0, 0);
+              hasCapturedLastFrame = true;
+              if (!videoElement.paused) {
+                videoElement.pause();
+              }
+            }
+
+            // Phase 2: Animated Allmax Branding + QR Outro
+            const outroTime = Math.max(0, elapsedSec - videoDuration);
+            drawOutroFrame({
+              ctx,
+              product,
+              productImage,
+              qrCanvas,
+              outroTime,
+              outroDuration,
+              width,
+              height,
+              lastFrameCanvas: hasCapturedLastFrame ? lastFrameCanvas : null,
+            });
+
+            const outroRatio = Math.min(1, outroTime / outroDuration);
+            const progressPercent = Math.min(96, Math.max(75, Math.round(75 + outroRatio * 21)));
+            onProgress?.(
+              progressPercent,
+              `Adding Allmax QR outro animation...`
+            );
           }
-
-          drawFittedMedia(ctx, videoElement, width, height);
-          drawOverlayElements(ctx, productImage, product, config, width, height);
-
-          const effectiveTime = Math.max(videoElement.currentTime, elapsedSec);
-          const progressPercent = Math.min(
-            96,
-            Math.max(25, Math.round(25 + (effectiveTime / duration) * 70))
-          );
-          onProgress?.(
-            progressPercent,
-            `Rendering frame: ${effectiveTime.toFixed(1)}s / ${duration.toFixed(1)}s`
-          );
 
           animationFrameId = requestAnimationFrame(renderLoop);
         };
@@ -582,4 +635,261 @@ async function renderVideoMockupClient({
         reject(new Error('Could not start video playback for rendering: ' + err.message));
       });
   });
+}
+
+function easeOutCubic(t: number): number {
+  const x = Math.max(0, Math.min(1, t));
+  return 1 - Math.pow(1 - x, 3);
+}
+
+function easeOutBack(t: number): number {
+  const x = Math.max(0, Math.min(1, t));
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+}
+
+function drawOutroFrame({
+  ctx,
+  product,
+  productImage,
+  qrCanvas,
+  outroTime,
+  outroDuration,
+  width,
+  height,
+  lastFrameCanvas,
+}: {
+  ctx: CanvasRenderingContext2D;
+  product: AllmaxProduct;
+  productImage: HTMLImageElement;
+  qrCanvas: HTMLCanvasElement;
+  outroTime: number;
+  outroDuration: number;
+  width: number;
+  height: number;
+  lastFrameCanvas: HTMLCanvasElement | null;
+}) {
+  const s = Math.min(width, height) / 720;
+  const isLandscape = width > height;
+
+  // 1. Cross-fade from last video frame into dark Allmax studio backdrop
+  const bgFade = easeOutCubic(outroTime / 0.35);
+  if (lastFrameCanvas && bgFade < 1) {
+    ctx.drawImage(lastFrameCanvas, 0, 0, width, height);
+  }
+
+  ctx.save();
+  ctx.globalAlpha = bgFade;
+
+  // Rich dark gradient background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+  bgGrad.addColorStop(0, '#07090F');
+  bgGrad.addColorStop(0.55, '#0D121F');
+  bgGrad.addColorStop(1, '#05070B');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, width, height);
+
+  // Pulsing Allmax Persimmon Orange radial energy glow behind center
+  const pulse = 0.85 + 0.15 * Math.sin(outroTime * 4.5);
+  const glowRadius = Math.max(width, height) * 0.48 * pulse;
+  const radialGlow = ctx.createRadialGradient(
+    width / 2,
+    height * 0.42,
+    10,
+    width / 2,
+    height * 0.42,
+    glowRadius
+  );
+  radialGlow.addColorStop(0, 'rgba(255, 72, 0, 0.28)');
+  radialGlow.addColorStop(0.5, 'rgba(255, 72, 0, 0.08)');
+  radialGlow.addColorStop(1, 'rgba(255, 72, 0, 0)');
+  ctx.fillStyle = radialGlow;
+  ctx.fillRect(0, 0, width, height);
+
+  // Subtle animated diagonal accent streaks
+  ctx.strokeStyle = 'rgba(255, 72, 0, 0.08)';
+  ctx.lineWidth = 2 * s;
+  const streakOffset = (outroTime * 90 * s) % (180 * s);
+  for (let i = -2; i < 8; i++) {
+    const xPos = i * 180 * s + streakOffset;
+    ctx.beginPath();
+    ctx.moveTo(xPos, 0);
+    ctx.lineTo(xPos - 260 * s, height);
+    ctx.stroke();
+  }
+
+  // 2. Top Allmax Brand Header (slides down 0.05s -> 0.50s)
+  const brandT = easeOutCubic((outroTime - 0.05) / 0.45);
+  if (brandT > 0) {
+    ctx.save();
+    ctx.globalAlpha = bgFade * brandT;
+    const brandY = (isLandscape ? 58 : 110) * s - (1 - brandT) * 28 * s;
+
+    // Orange AM badge + ALLMAX NUTRITION text centered
+    const badgeSize = 42 * s;
+    ctx.font = `900 ${Math.round(28 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    const brandText = 'ALLMAX NUTRITION';
+    const textW = ctx.measureText(brandText).width;
+    const totalW = badgeSize + 14 * s + textW;
+    const startX = width / 2 - totalW / 2;
+
+    // Circle AM badge
+    ctx.fillStyle = '#FF4800';
+    ctx.beginPath();
+    ctx.arc(startX + badgeSize / 2, brandY, badgeSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 ${Math.round(17 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('AM', startX + badgeSize / 2, brandY + 1 * s);
+
+    // Brand wordmark
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 ${Math.round(28 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText(brandText, startX + badgeSize + 14 * s, brandY + 1 * s);
+
+    // Expanding orange underline
+    const lineW = 140 * s * brandT;
+    ctx.fillStyle = '#FF4800';
+    roundRect(ctx, width / 2 - lineW / 2, brandY + 30 * s, lineW, 4 * s, 2 * s);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // Layout coordinates for Product Tub & QR Card (adapts cleanly for Portrait vs Landscape)
+  const centerX = width / 2;
+  const tubCenterX = isLandscape ? width * 0.3 : centerX;
+  const tubCenterY = isLandscape ? height * 0.54 : height * 0.34;
+  const qrCenterX = isLandscape ? width * 0.68 : centerX;
+  const qrCenterY = isLandscape ? height * 0.54 : height * 0.69;
+
+  // 3. Hero Product Tub with bounce-in & gentle float (0.18s -> 0.68s)
+  const tubT = easeOutBack((outroTime - 0.18) / 0.5);
+  if (tubT > 0) {
+    ctx.save();
+    const floatY = Math.sin(outroTime * 3.5) * 6 * s;
+    const tubH = (isLandscape ? 270 : 310) * s * Math.max(0.01, tubT);
+    const tubW = tubH * (400 / 520);
+
+    ctx.globalAlpha = bgFade * Math.min(1, tubT * 1.4);
+    ctx.shadowColor = product.accentColor || '#FF4800';
+    ctx.shadowBlur = 32 * s;
+    ctx.drawImage(
+      productImage,
+      tubCenterX - tubW / 2,
+      tubCenterY - tubH / 2 + floatY,
+      tubW,
+      tubH
+    );
+    ctx.restore();
+  }
+
+  // 4. Product Name & Tagline (0.35s -> 0.80s)
+  const titleT = easeOutCubic((outroTime - 0.35) / 0.45);
+  if (titleT > 0) {
+    ctx.save();
+    ctx.globalAlpha = bgFade * titleT;
+    const titleY = (isLandscape ? height * 0.84 : height * 0.505) + (1 - titleT) * 20 * s;
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 ${Math.round(34 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(product.name.toUpperCase(), tubCenterX, titleY);
+
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = `700 ${Math.round(16 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.fillText(product.tagline, tubCenterX, titleY + 28 * s);
+    ctx.restore();
+  }
+
+  // 5. Animated QR Code Card (0.50s -> 1.00s)
+  const qrT = easeOutBack((outroTime - 0.5) / 0.5);
+  if (qrT > 0) {
+    ctx.save();
+    ctx.translate(qrCenterX, qrCenterY);
+    const cardScale = Math.max(0.01, qrT);
+    ctx.scale(cardScale, cardScale);
+    ctx.globalAlpha = bgFade * Math.min(1, qrT * 1.5);
+
+    const cardW = 240 * s;
+    const cardH = 278 * s;
+
+    // Card drop shadow
+    ctx.shadowColor = 'rgba(255, 72, 0, 0.35)';
+    ctx.shadowBlur = 28 * s;
+    ctx.shadowOffsetY = 8 * s;
+
+    ctx.fillStyle = '#FFFFFF';
+    roundRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, 22 * s);
+    ctx.fill();
+
+    // Accent border
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#FF4800';
+    ctx.lineWidth = 3 * s;
+    roundRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, 22 * s);
+    ctx.stroke();
+
+    // Draw crisp QR Code
+    const qrSize = 176 * s;
+    const qrY = -cardH / 2 + 18 * s;
+    ctx.drawImage(qrCanvas, -qrSize / 2, qrY, qrSize, qrSize);
+
+    // Animated scanner laser line sweeping smoothly over the QR code
+    const scanProgress = (Math.sin(outroTime * 4.2 - Math.PI / 2) + 1) / 2;
+    const scanY = qrY + 8 * s + scanProgress * (qrSize - 16 * s);
+    const scanGrad = ctx.createLinearGradient(-qrSize / 2, 0, qrSize / 2, 0);
+    scanGrad.addColorStop(0, 'rgba(255, 72, 0, 0)');
+    scanGrad.addColorStop(0.5, 'rgba(255, 72, 0, 0.9)');
+    scanGrad.addColorStop(1, 'rgba(255, 72, 0, 0)');
+    ctx.fillStyle = scanGrad;
+    ctx.fillRect(-qrSize / 2, scanY, qrSize, 3 * s);
+
+    // CTA Label inside QR card
+    ctx.fillStyle = '#FF4800';
+    ctx.font = `900 ${Math.round(17 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('SCAN TO SHOP', 0, qrY + qrSize + 24 * s);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = `700 ${Math.round(12 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.fillText('allmaxnutrition.com', 0, qrY + qrSize + 46 * s);
+
+    ctx.restore();
+  }
+
+  // 6. Bottom Website Pill (0.75s -> end)
+  const footerT = easeOutCubic((outroTime - 0.75) / 0.45);
+  if (footerT > 0 && !isLandscape) {
+    ctx.save();
+    ctx.globalAlpha = bgFade * footerT;
+    const footerY = height - 85 * s + (1 - footerT) * 20 * s;
+    const pillW = 420 * s;
+    const pillH = 40 * s;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    roundRect(ctx, centerX - pillW / 2, footerY - pillH / 2, pillW, pillH, 20 * s);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 72, 0, 0.45)';
+    ctx.lineWidth = 1.5 * s;
+    roundRect(ctx, centerX - pillW / 2, footerY - pillH / 2, pillW, pillH, 20 * s);
+    ctx.stroke();
+
+    ctx.fillStyle = '#F8FAFC';
+    ctx.font = `800 ${Math.round(14 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('FUEL YOUR GREATNESS  •  ALLMAXNUTRITION.COM', centerX, footerY);
+    ctx.restore();
+  }
+
+  ctx.restore();
 }
