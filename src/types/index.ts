@@ -96,6 +96,9 @@ export interface CreatorProfile {
 export interface PostHistoryItem {
   id: string;
   productName: string;
+  hookTitle?: string;
+  caption?: string;
+  platforms?: string[];
   mediaType: MediaType;
   createdAt: string;
   saves: number;

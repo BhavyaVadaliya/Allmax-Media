@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { HomeScreen } from '@/components/HomeScreen';
+import { PostHistoryScreen } from '@/components/PostHistoryScreen';
 import { WorkflowOverviewScreen } from '@/components/WorkflowOverviewScreen';
 import { MediaCaptureStep } from '@/components/MediaCaptureStep';
 import { ProductOverlayStudio, ProductOverlayStudioRef } from '@/components/ProductOverlayStudio';
@@ -28,33 +29,39 @@ const DEFAULT_PROFILE: CreatorProfile = {
 const DEFAULT_HISTORY: PostHistoryItem[] = [
   {
     id: 'post-init-1',
-    productName: 'ISOFLEX Whey Isolate',
+    productName: 'ISOFLEX',
+    hookTitle: 'POST-WORKOUT RECOVERY HACK!',
+    platforms: ['Instagram Reels', 'TikTok'],
     mediaType: 'video',
-    createdAt: '2 days ago',
-    saves: 482,
-    codeUses: 47,
+    createdAt: 'Nov 22, 2026',
+    saves: 418,
+    codeUses: 34,
   },
   {
     id: 'post-init-2',
-    productName: 'IMPACT IGNITER Pre',
+    productName: 'IMPACT IGNITER',
+    hookTitle: 'LEG DAY ENERGY & PUMP FORMULA',
+    platforms: ['Instagram Reels', 'TikTok'],
     mediaType: 'video',
-    createdAt: '5 days ago',
-    saves: 364,
-    codeUses: 33,
+    createdAt: 'Nov 18, 2026',
+    saves: 392,
+    codeUses: 27,
   },
   {
     id: 'post-init-3',
-    productName: 'AMINOCORE BCAA',
+    productName: 'AMINOCORE',
+    hookTitle: 'ZERO SUGAR INTRA-WORKOUT FUEL',
+    platforms: ['Instagram Reels', 'TikTok'],
     mediaType: 'image',
-    createdAt: '1 week ago',
-    saves: 228,
-    codeUses: 22,
+    createdAt: 'Nov 14, 2026',
+    saves: 264,
+    codeUses: 41,
   },
 ];
 
 export default function HomePage() {
   const [showIntro, setShowIntro] = useState<boolean>(true);
-  const [activeView, setActiveView] = useState<'home' | 'overview' | 'studio'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'history' | 'overview' | 'studio'>('home');
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
 
@@ -114,7 +121,10 @@ export default function HomePage() {
     // Record newly generated post in Post History
     const newItem: PostHistoryItem = {
       id: 'post-' + Date.now(),
-      productName: product.name,
+      productName: product.shortName,
+      hookTitle: selectedHook?.title || `${product.shortName} WORKOUT REEL`,
+      caption: selectedHook?.script,
+      platforms: ['Instagram Reels', 'TikTok'],
       mediaType: result.mediaType,
       createdAt: 'Just now',
       saves: 0,
@@ -177,8 +187,16 @@ export default function HomePage() {
           onUpdateProfile={handleUpdateProfile}
           postHistory={postHistory}
           onCreatePost={handleStartCreatePost}
+          onOpenHistory={() => setActiveView('history')}
           onOpenMobileModal={() => setIsMobileModalOpen(true)}
           onReplayIntro={() => setShowIntro(true)}
+        />
+      ) : activeView === 'history' ? (
+        <PostHistoryScreen
+          profile={profile}
+          postHistory={postHistory}
+          onNewPost={handleStartCreatePost}
+          onGoHome={() => setActiveView('home')}
         />
       ) : activeView === 'overview' ? (
         <WorkflowOverviewScreen

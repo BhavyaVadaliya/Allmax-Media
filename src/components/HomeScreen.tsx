@@ -13,8 +13,6 @@ import {
   Copy,
   Smartphone,
   RotateCcw,
-  Film,
-  Image as ImageIcon,
 } from 'lucide-react';
 import { CreatorProfile, PostHistoryItem } from '@/types';
 
@@ -23,6 +21,7 @@ interface HomeScreenProps {
   onUpdateProfile: (profile: CreatorProfile) => void;
   postHistory: PostHistoryItem[];
   onCreatePost: () => void;
+  onOpenHistory: () => void;
   onOpenMobileModal: () => void;
   onReplayIntro: () => void;
 }
@@ -32,10 +31,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onUpdateProfile,
   postHistory,
   onCreatePost,
+  onOpenHistory,
   onOpenMobileModal,
   onReplayIntro,
 }) => {
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -195,9 +194,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </button>
 
-        {/* 3. Post History Card */}
+        {/* 3. Post History Card (Opens Full-Screen Post History) */}
         <button
-          onClick={() => setShowHistoryModal(true)}
+          onClick={onOpenHistory}
           className="w-full text-left rounded-3xl bg-white hover:bg-slate-50 border border-slate-200 p-4 flex items-center justify-between gap-3 shadow-sm active:scale-[0.99] transition-all"
         >
           <div className="flex items-center space-x-3.5 min-w-0">
@@ -235,74 +234,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
         </button>
       </main>
-
-      {/* Post History Modal */}
-      {showHistoryModal && (
-        <div
-          onClick={() => setShowHistoryModal(false)}
-          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white border border-slate-200 rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden shadow-2xl safe-bottom"
-          >
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <History className="w-4 h-4 text-sky-600" />
-                <h3 className="font-black text-slate-900 text-sm">
-                  Published Post History ({postHistory.length})
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowHistoryModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-4 overflow-y-auto space-y-2.5 bg-[#F8FAFC]">
-              {postHistory.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-2xl bg-white border border-slate-200/90 p-3.5 flex items-center justify-between gap-3 shadow-sm"
-                >
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
-                      {item.mediaType === 'video' ? (
-                        <Film className="w-4 h-4 text-[#FF4800]" />
-                      ) : (
-                        <ImageIcon className="w-4 h-4 text-[#FF4800]" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-black text-slate-900 truncate">
-                        {item.productName} {item.mediaType === 'video' ? 'Reel' : 'Post'}
-                      </p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{item.createdAt}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3 shrink-0 text-right">
-                    <div>
-                      <span className="text-xs font-black text-emerald-600 block">
-                        {item.saves}
-                      </span>
-                      <span className="text-[9px] text-slate-400 uppercase font-bold">Saves</span>
-                    </div>
-                    <div>
-                      <span className="text-xs font-black text-[#FF4800] block">
-                        {item.codeUses}
-                      </span>
-                      <span className="text-[9px] text-slate-400 uppercase font-bold">Uses</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Studio Settings Modal */}
       {showSettingsModal && (
