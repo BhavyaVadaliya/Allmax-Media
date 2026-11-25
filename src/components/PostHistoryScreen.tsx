@@ -155,6 +155,16 @@ export const PostHistoryScreen: React.FC<PostHistoryScreenProps> = ({
             );
           })}
         </div>
+        {/* Bottom Back to Home Button */}
+        <div className="pb-4">
+          <button
+            onClick={onGoHome}
+            className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center justify-center space-x-2"
+          >
+            <Home className="w-4 h-4 text-[#FF4800]" />
+            <span>Back to Home</span>
+          </button>
+        </div>
       </main>
     </div>
   );
