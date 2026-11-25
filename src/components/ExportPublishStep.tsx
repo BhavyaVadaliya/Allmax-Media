@@ -12,8 +12,6 @@ import {
   ExternalLink,
   Instagram,
   Smartphone,
-  Zap,
-  Share2,
   Home,
   Play,
   X,
@@ -45,7 +43,6 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [showReelPreview, setShowReelPreview] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [publishDone, setPublishDone] = useState<boolean>(false);
   const [previewCurrentTime, setPreviewCurrentTime] = useState<number>(0);
   const [previewDuration, setPreviewDuration] = useState<number>(0);
   const previewVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -138,37 +135,6 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
 
     showToast('TikTok Search Caption copied!');
     window.open('https://www.tiktok.com/upload', '_blank', 'noopener,noreferrer');
-  };
-
-  const handlePublishBoth = async () => {
-    try {
-      await navigator.clipboard.writeText(igSeoCaption);
-    } catch {
-      // Ignore
-    }
-
-    if (navigator.share && renderResult.blob) {
-      try {
-        const file = new File([renderResult.blob], renderResult.filename, {
-          type: renderResult.blob.type,
-        });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: `Allmax ${product.shortName} Cross-Post`,
-            text: igSeoCaption,
-            files: [file],
-          });
-          setPublishDone(true);
-          return;
-        }
-      } catch {
-        // Fallback
-      }
-    }
-
-    handleDownload();
-    setPublishDone(true);
-    showToast('Published & Saved! Captions copied to clipboard.');
   };
 
   return (
@@ -293,45 +259,7 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
           </button>
         </div>
 
-        {/* 5. Connected Athlete Mode Card */}
-        <div className="rounded-3xl bg-orange-50/50 border-2 border-[#FF4800]/50 p-4 shadow-sm space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <Zap className="w-4 h-4 text-[#FF4800] fill-[#FF4800]" />
-                <h3 className="text-xs sm:text-sm font-black text-slate-900">
-                  Connected Athlete Mode
-                </h3>
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Simultaneous cross-post ({creatorHandle})
-              </p>
-            </div>
-
-            <span className="px-2 py-0.5 rounded-md bg-emerald-100 border border-emerald-300 text-[9px] font-black text-emerald-800 uppercase">
-              ACTIVE
-            </span>
-          </div>
-
-          <button
-            onClick={handlePublishBoth}
-            className="w-full py-3.5 px-4 rounded-2xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
-          >
-            {publishDone ? (
-              <>
-                <Check className="w-4 h-4 stroke-[3]" />
-                <span>Published &amp; Saved!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-4 h-4" />
-                <span>1-Click Publish to Both</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* 6. Back to Dashboard Button */}
+        {/* 5. Back to Dashboard Button */}
         <button
           onClick={onNewMockup}
           className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-black text-xs uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center justify-center space-x-2"
