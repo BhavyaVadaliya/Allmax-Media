@@ -279,3 +279,84 @@ input[type="range"]::-webkit-slider-thumb:active {
 .animate-intro-glow {
   animation: introGlow 2.4s ease-in-out infinite;
 }
+
+/* Reel Overlay Entrance Animations (Step 2 Live Preview) */
+@keyframes reelSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes reelPopCenter {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.78);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@keyframes reelTubUp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -25%) scale(0.75);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes reelSlideLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reelFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reel-banner {
+  opacity: 0;
+  animation: reelSlideDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s forwards;
+}
+
+.animate-reel-subtitle {
+  opacity: 0;
+  animation: reelPopCenter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s forwards;
+}
+
+.animate-reel-tub {
+  opacity: 0;
+  animation: reelTubUp 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.55s forwards;
+}
+
+.animate-reel-promo {
+  opacity: 0;
+  animation: reelSlideLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+}
+
+.animate-reel-strip {
+  opacity: 0;
+  animation: reelFadeUp 0.45s ease-out 1.0s forwards;
+}

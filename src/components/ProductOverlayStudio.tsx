@@ -75,6 +75,7 @@ export const ProductOverlayStudio = forwardRef<
     const [copiedSeo, setCopiedSeo] = useState<boolean>(false);
     const [copiedAlt, setCopiedAlt] = useState<boolean>(false);
     const [qrDataUrl, setQrDataUrl] = useState<string>('');
+    const [animKey, setAnimKey] = useState<number>(0);
 
     useEffect(() => {
       QRCode.toDataURL(selectedProduct.allmaxUrl || 'https://www.allmaxnutrition.com', {
@@ -210,6 +211,7 @@ export const ProductOverlayStudio = forwardRef<
         scale: 0.34,
         rotation: 0,
       }));
+      setAnimKey((k) => k + 1);
     };
 
     const togglePlay = () => {
@@ -423,8 +425,11 @@ export const ProductOverlayStudio = forwardRef<
                     </div>
                   )}
 
-                  {/* LAYER 1: Top SEARCH-QUERY OCR BANNER */}
-                  <div className="absolute top-3.5 left-3 right-3 z-20 rounded-2xl bg-white shadow-lg border-b-4 border-[#FF4800] px-3 py-2 text-center pointer-events-none">
+                  {/* LAYER 1: Top SEARCH-QUERY OCR BANNER (Animated Slide-Down) */}
+                  <div
+                    key={`banner-${animKey}`}
+                    className="absolute top-3.5 left-3 right-3 z-20 rounded-2xl bg-white shadow-lg border-b-4 border-[#FF4800] px-3 py-2 text-center pointer-events-none animate-reel-banner"
+                  >
                     <span className="text-[8px] font-black tracking-[0.14em] text-[#FF4800] uppercase block">
                       SEARCH-QUERY OCR BANNER
                     </span>
@@ -433,15 +438,19 @@ export const ProductOverlayStudio = forwardRef<
                     </p>
                   </div>
 
-                  {/* LAYER 2: Center Kinetic Subtitle Box */}
-                  <div className="absolute top-[43%] left-3.5 right-3.5 -translate-y-1/2 z-20 rounded-xl bg-black/75 backdrop-blur-sm border border-amber-400/60 px-3 py-2 text-center pointer-events-none shadow-lg">
+                  {/* LAYER 2: Center Kinetic Subtitle Box (Animated Pop-In) */}
+                  <div
+                    key={`sub-${animKey}`}
+                    className="absolute top-[43%] left-3.5 right-3.5 -translate-y-1/2 z-20 rounded-xl bg-black/75 backdrop-blur-sm border border-amber-400/60 px-3 py-2 text-center pointer-events-none shadow-lg animate-reel-subtitle"
+                  >
                     <p className="text-[11px] sm:text-xs font-black text-amber-300 uppercase tracking-wide leading-snug">
                       &ldquo;{kineticLine}&rdquo;
                     </p>
                   </div>
 
-                  {/* LAYER 3A: Draggable Product Tub */}
+                  {/* LAYER 3A: Draggable Product Tub (Animated Bounce-Up) */}
                   <div
+                    key={`tub-${animKey}`}
                     onMouseDown={(e) => {
                       e.stopPropagation();
                       handleDragStart(e.clientX, e.clientY);
@@ -459,7 +468,7 @@ export const ProductOverlayStudio = forwardRef<
                       width: `${config.scale * 42}%`,
                     }}
                     className={`absolute z-20 cursor-grab active:cursor-grabbing ${
-                      isDragging ? 'ring-2 ring-[#FF4800] rounded-xl bg-white/10' : ''
+                      isDragging ? 'ring-2 ring-[#FF4800] rounded-xl bg-white/10' : 'animate-reel-tub'
                     }`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -471,8 +480,11 @@ export const ProductOverlayStudio = forwardRef<
                     />
                   </div>
 
-                  {/* LAYER 3B: Bottom ATHLETE PROMO LOCKUP */}
-                  <div className="absolute bottom-9 left-[30%] right-12 z-20 rounded-xl bg-black/85 backdrop-blur-md border border-white/15 px-3 py-1.5 pointer-events-none shadow-lg">
+                  {/* LAYER 3B: Bottom ATHLETE PROMO LOCKUP (Animated Slide-In) */}
+                  <div
+                    key={`promo-${animKey}`}
+                    className="absolute bottom-9 left-[30%] right-12 z-20 rounded-xl bg-black/85 backdrop-blur-md border border-white/15 px-3 py-1.5 pointer-events-none shadow-lg animate-reel-promo"
+                  >
                     <span className="text-[8px] font-bold tracking-wider text-slate-400 uppercase block">
                       ATHLETE PROMO LOCKUP
                     </span>
@@ -481,8 +493,11 @@ export const ProductOverlayStudio = forwardRef<
                     </p>
                   </div>
 
-                  {/* Bottom Creator Watermark Strip */}
-                  <div className="absolute bottom-2 left-3 right-3 z-20 rounded-lg bg-black/65 backdrop-blur-sm px-2.5 py-1 text-[10px] text-white/90 font-semibold truncate pointer-events-none">
+                  {/* Bottom Creator Watermark Strip (Animated Fade-Up) */}
+                  <div
+                    key={`strip-${animKey}`}
+                    className="absolute bottom-2 left-3 right-3 z-20 rounded-lg bg-black/65 backdrop-blur-sm px-2.5 py-1 text-[10px] text-white/90 font-semibold truncate pointer-events-none animate-reel-strip"
+                  >
                     <strong className="text-white">{creatorHandle}</strong> {hookTitle} •{' '}
                     {promoShort}
                   </div>

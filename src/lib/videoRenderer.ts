@@ -173,9 +173,11 @@ export function drawOverlayElements(
   product: AllmaxProduct,
   config: OverlayConfig,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  layerFilter: 'all' | 'tub' | 'banner' | 'subtitle' | 'promo' = 'all'
 ) {
-  ctx.save();
+  if (layerFilter === 'all' || layerFilter === 'tub') {
+    ctx.save();
 
   const posX = (config.x / 100) * canvasWidth;
   const posY = (config.y / 100) * canvasHeight;
@@ -280,6 +282,7 @@ export function drawOverlayElements(
   }
 
   ctx.restore();
+  }
 
   // =========================================================================
   // Step 2 Package 3-Layer Overlays (OCR Banner, Kinetic Subtitle, Promo Lockup)
@@ -287,7 +290,7 @@ export function drawOverlayElements(
   const s = Math.min(canvasWidth, canvasHeight) / 720;
 
   // 1. Top SEARCH-QUERY OCR BANNER
-  if (config.ocrBannerTitle) {
+  if ((layerFilter === 'all' || layerFilter === 'banner') && config.ocrBannerTitle) {
     ctx.save();
     const bannerW = canvasWidth * 0.88;
     const bannerH = Math.round(78 * s);
@@ -321,7 +324,7 @@ export function drawOverlayElements(
   }
 
   // 2. Center Kinetic Subtitle Box
-  if (config.kineticSubtitle) {
+  if ((layerFilter === 'all' || layerFilter === 'subtitle') && config.kineticSubtitle) {
     ctx.save();
     const subW = canvasWidth * 0.86;
     const subH = Math.round(72 * s);
@@ -355,7 +358,7 @@ export function drawOverlayElements(
   }
 
   // 3. Bottom ATHLETE PROMO LOCKUP
-  if (config.promoCodeText) {
+  if ((layerFilter === 'all' || layerFilter === 'promo') && config.promoCodeText) {
     ctx.save();
     const lockW = Math.round(280 * s);
     const lockH = Math.round(58 * s);
@@ -568,17 +571,23 @@ async function renderVideoMockupClient({
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // Pre-cache the static product overlay (tub + shadowBlur + glow + badge + CTA) ONCE
-  // so the 30fps render loop does a single fast GPU blit instead of re-rasterizing SVGs & shadows every frame!
-  const overlayCacheCanvas = document.createElement('canvas');
-  overlayCacheCanvas.width = width;
-  overlayCacheCanvas.height = height;
-  const overlayCacheCtx = overlayCacheCanvas.getContext('2d');
-  if (overlayCacheCtx) {
-    overlayCacheCtx.imageSmoothingEnabled = true;
-    overlayCacheCtx.imageSmoothingQuality = 'high';
-    drawOverlayElements(overlayCacheCtx, productImage, product, config, width, height);
-  }
+  // Pre-cache each overlay layer separately ONCE for ultra-fast animated GPU blits at 30fps
+  const makeLayerCache = (layer: 'tub' | 'banner' | 'subtitle' | 'promo') => {
+    const c = document.createElement('canvas');
+    c.width = width;
+    c.height = height;
+    const cCtx = c.getContext('2d');
+    if (cCtx) {
+      cCtx.imageSmoothingEnabled = true;
+      cCtx.imageSmoothingQuality = 'high';
+      drawOverlayElements(cCtx, productImage, product, config, width, height, layer);
+    }
+    return c;
+  };
+  const tubCacheCanvas = makeLayerCache('tub');
+  const bannerCacheCanvas = makeLayerCache('banner');
+  const subtitleCacheCanvas = makeLayerCache('subtitle');
+  const promoCacheCanvas = makeLayerCache('promo');
 
   // Pre-cache the outro hero tub with its ambient glow ONCE
   const s = Math.min(width, height) / 720;
@@ -719,7 +728,46 @@ async function renderVideoMockupClient({
             }
 
             drawFittedMedia(ctx, videoElement, width, height);
-            ctx.drawImage(overlayCacheCanvas, 0, 0);
+
+            // Staggered Reel Entrance Animations at the start of the video (0.0s -> 1.3s)
+            // 1) Top OCR Banner slides down (0.05s -> 0.50s)
+            const bT = easeOutBack((elapsedSec - 0.05) / 0.45);
+            if (bT > 0) {
+              ctx.save();
+              ctx.globalAlpha = Math.min(1, bT * 1.4);
+              ctx.drawImage(bannerCacheCanvas, 0, (1 - bT) * -45 * s);
+              ctx.restore();
+            }
+
+            // 2) Center Kinetic Subtitle pops in (0.30s -> 0.75s)
+            const sT = easeOutBack((elapsedSec - 0.3) / 0.45);
+            if (sT > 0) {
+              ctx.save();
+              const sc = 0.82 + 0.18 * sT;
+              ctx.globalAlpha = Math.min(1, sT * 1.4);
+              ctx.translate(width / 2, height * 0.48);
+              ctx.scale(sc, sc);
+              ctx.drawImage(subtitleCacheCanvas, -width / 2, -height * 0.48);
+              ctx.restore();
+            }
+
+            // 3) Product Tub bounces up (0.50s -> 1.00s)
+            const tT = easeOutBack((elapsedSec - 0.5) / 0.5);
+            if (tT > 0) {
+              ctx.save();
+              ctx.globalAlpha = Math.min(1, tT * 1.4);
+              ctx.drawImage(tubCacheCanvas, 0, (1 - tT) * 50 * s);
+              ctx.restore();
+            }
+
+            // 4) Bottom Promo Lockup slides in from right (0.75s -> 1.25s)
+            const pT = easeOutCubic((elapsedSec - 0.75) / 0.5);
+            if (pT > 0) {
+              ctx.save();
+              ctx.globalAlpha = pT;
+              ctx.drawImage(promoCacheCanvas, (1 - pT) * 45 * s, 0);
+              ctx.restore();
+            }
 
             const effectiveTime = Math.max(videoElement.currentTime, elapsedSec);
             const progressPercent = Math.min(
