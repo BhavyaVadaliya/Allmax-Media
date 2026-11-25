@@ -190,6 +190,7 @@ export default function HomePage() {
         <>
           <Navbar
             currentStep={currentStep}
+            handle={profile.handle}
             onStepClick={(step) => {
               if (isRendering) return;
               setCurrentStep(step);
