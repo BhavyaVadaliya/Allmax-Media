@@ -211,6 +211,11 @@ export const ProductOverlayStudio = forwardRef<
         scale: 0.34,
         rotation: 0,
       }));
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      }
       setAnimKey((k) => k + 1);
     };
 
