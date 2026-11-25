@@ -91,6 +91,7 @@ export const ProductOverlayStudio = forwardRef<
     const [isMuted, setIsMuted] = useState<boolean>(true);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const captionRef = useRef<HTMLTextAreaElement | null>(null);
 
     const hookTitle = selectedHook?.title || 'POST-WORKOUT RECOVERY HACK!';
     const kineticLine =
@@ -109,6 +110,14 @@ export const ProductOverlayStudio = forwardRef<
     const [tiktokCaption, setTiktokCaption] = useState<string>(
       `${hookTitle} 🔥 ${selectedProduct.shortName} (${selectedProduct.tagline}) — Use code ${promoShort} for 20% OFF! #Allmax #GymTok #WorkoutFuel`
     );
+
+    useEffect(() => {
+      const el = captionRef.current;
+      if (el) {
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+      }
+    }, [seoTab, igCaption, tiktokCaption]);
 
     const altText = `Fitness athlete ${creatorHandle} in gym featuring Allmax ${selectedProduct.shortName} with code ${promoShort}`;
 
@@ -641,14 +650,19 @@ export const ProductOverlayStudio = forwardRef<
             </div>
 
             <textarea
+              ref={captionRef}
               value={seoTab === 'instagram' ? igCaption : tiktokCaption}
-              onChange={(e) =>
-                seoTab === 'instagram'
-                  ? setIgCaption(e.target.value)
-                  : setTiktokCaption(e.target.value)
-              }
-              rows={3}
-              className="w-full rounded-xl bg-[#F8FAFC] border border-slate-200 p-2.5 text-xs text-slate-800 leading-relaxed font-medium focus:outline-none focus:border-[#FF4800] resize-none"
+              onChange={(e) => {
+                if (seoTab === 'instagram') {
+                  setIgCaption(e.target.value);
+                } else {
+                  setTiktokCaption(e.target.value);
+                }
+                e.target.style.height = 'auto';
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
+              rows={1}
+              className="w-full rounded-xl bg-[#F8FAFC] border border-slate-200 p-2.5 text-xs text-slate-800 leading-relaxed font-medium focus:outline-none focus:border-[#FF4800] resize-none overflow-hidden"
             />
 
             {/* Alt Text Bar */}
