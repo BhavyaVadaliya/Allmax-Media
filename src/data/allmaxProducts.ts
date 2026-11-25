@@ -384,7 +384,7 @@ export const ALLMAX_PRODUCTS: AllmaxProduct[] = [
 
 // Curated Gym / Creator sample media for instant testing without camera or file upload
 export const SAMPLE_CREATOR_MEDIA = [
-  // Videos (4 distinct workout exercises)
+  // Videos (6 distinct ~10s workout exercises — zero repeats)
   {
     id: 'sample-1',
     name: 'Barbell Bench Press',
@@ -393,7 +393,7 @@ export const SAMPLE_CREATOR_MEDIA = [
     url: '/samples/workout1.mp4',
     thumbnail: '/samples/thumb1.jpg',
     description: 'Real gym athlete barbell bench press video',
-    duration: 6,
+    duration: 10,
   },
   {
     id: 'sample-2',
@@ -403,7 +403,7 @@ export const SAMPLE_CREATOR_MEDIA = [
     url: '/samples/workout2.mp4',
     thumbnail: '/samples/thumb2.jpg',
     description: 'Real gym athlete squat power workout video',
-    duration: 6,
+    duration: 10,
   },
   {
     id: 'sample-v3',
@@ -413,7 +413,7 @@ export const SAMPLE_CREATOR_MEDIA = [
     url: '/samples/workout3.mp4',
     thumbnail: '/samples/thumb3.jpg',
     description: 'Strength athlete barbell deadlift demonstration',
-    duration: 6,
+    duration: 10,
   },
   {
     id: 'sample-v4',
@@ -423,7 +423,27 @@ export const SAMPLE_CREATOR_MEDIA = [
     url: '/samples/workout4.mp4',
     thumbnail: '/samples/thumb4.jpg',
     description: 'Overhead barbell shoulder press workout',
-    duration: 6,
+    duration: 10,
+  },
+  {
+    id: 'sample-v5',
+    name: 'Hanging Crunches',
+    type: 'video' as const,
+    sourceType: 'sample' as const,
+    url: '/samples/workout5.mp4',
+    thumbnail: '/samples/thumb5.jpg',
+    description: 'Core & abs hanging crunches demonstration',
+    duration: 10,
+  },
+  {
+    id: 'sample-v6',
+    name: 'Hanging Leg Raises',
+    type: 'video' as const,
+    sourceType: 'sample' as const,
+    url: '/samples/workout6.mp4',
+    thumbnail: '/samples/thumb6.jpg',
+    description: 'Lower abs hanging leg raises workout',
+    duration: 10,
   },
   // Images (6 distinct gym & fitness photos)
   {
