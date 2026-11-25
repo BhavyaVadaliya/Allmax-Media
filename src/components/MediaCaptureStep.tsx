@@ -56,10 +56,8 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [demoTab, setDemoTab] = useState<'video' | 'image'>('video');
 
   const demoVideos = SAMPLE_CREATOR_MEDIA.filter((item) => item.type === 'video');
-  const demoImages = SAMPLE_CREATOR_MEDIA.filter((item) => item.type === 'image');
 
   const hooks = getSearchHooksForProduct(selectedProduct, promoCode);
   const activeHook =
@@ -590,41 +588,19 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
                 </button>
               </div>
 
-              {/* Separate 1-Tap Demo Videos & Demo Images Section */}
+              {/* 1-Tap Demo Videos Section */}
               <div className="space-y-2 flex-1 min-h-0 flex flex-col justify-end">
                 <div className="flex items-center justify-between px-0.5">
                   <span className="text-xs font-black text-slate-900">
-                    Or Try 1-Tap Demo Media
+                    Or Try 1-Tap Demo Videos
                   </span>
-
-                  <div className="inline-flex rounded-xl bg-slate-100 p-0.5 border border-slate-200">
-                    <button
-                      onClick={() => setDemoTab('video')}
-                      className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                        demoTab === 'video'
-                          ? 'bg-[#FF4800] text-white shadow-sm'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <Video className="w-3 h-3" />
-                      <span>Videos ({demoVideos.length})</span>
-                    </button>
-                    <button
-                      onClick={() => setDemoTab('image')}
-                      className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                        demoTab === 'image'
-                          ? 'bg-[#FF4800] text-white shadow-sm'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <ImageIcon className="w-3 h-3" />
-                      <span>Images ({demoImages.length})</span>
-                    </button>
-                  </div>
+                  <span className="text-[10px] font-black text-[#FF4800] uppercase">
+                    {demoVideos.length} Clips Ready
+                  </span>
                 </div>
 
                 <div className="flex space-x-2 overflow-x-auto scrollbar-none pb-1">
-                  {(demoTab === 'video' ? demoVideos : demoImages).map((item) => (
+                  {demoVideos.map((item) => (
                     <button
                       key={item.id}
                       onClick={() => onMediaSelected(item)}
