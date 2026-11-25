@@ -14,12 +14,12 @@ interface RenderOptions {
 export async function renderMockupMedia(options: RenderOptions): Promise<RenderResult> {
   const { mediaElement, mediaItem, mediaType, product, config, onProgress, aspectRatio = '9:16' } = options;
 
-  let targetWidth = 720;
-  let targetHeight = 1280;
+  let targetWidth = 1080;
+  let targetHeight = 1920;
 
   if (aspectRatio === '16:9') {
-    targetWidth = 1280;
-    targetHeight = 720;
+    targetWidth = 1920;
+    targetHeight = 1080;
   } else if (aspectRatio === '1:1') {
     targetWidth = 1080;
     targetHeight = 1080;
@@ -458,15 +458,19 @@ async function renderVideoMockupClient({
     videoElement.duration && !isNaN(videoElement.duration) ? videoElement.duration : 6,
     30
   );
-  const outroDuration = 2.8;
+  const outroDuration = 4.5;
   const totalDuration = videoDuration + outroDuration;
 
-  // Pre-render high-res scannable QR code for the product/website onto an offscreen canvas
+  // Enable high-quality canvas smoothing
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  // Pre-render ultra-crisp 512px scannable QR code for the product/website onto an offscreen canvas
   const qrCanvas = document.createElement('canvas');
   const qrTargetUrl = product.allmaxUrl || 'https://www.allmaxnutrition.com';
   await QRCode.toCanvas(qrCanvas, qrTargetUrl, {
-    width: 240,
-    margin: 1,
+    width: 512,
+    margin: 2,
     color: {
       dark: '#0A0D16',
       light: '#FFFFFF',
@@ -493,7 +497,7 @@ async function renderVideoMockupClient({
 
   const recorder = new MediaRecorder(canvasStream, {
     mimeType,
-    videoBitsPerSecond: 4_000_000,
+    videoBitsPerSecond: 10_000_000,
   });
 
   const chunks: Blob[] = [];
@@ -836,10 +840,13 @@ function drawOutroFrame({
     roundRect(ctx, -cardW / 2, -cardH / 2, cardW, cardH, 22 * s);
     ctx.stroke();
 
-    // Draw crisp QR Code
-    const qrSize = 176 * s;
-    const qrY = -cardH / 2 + 18 * s;
-    ctx.drawImage(qrCanvas, -qrSize / 2, qrY, qrSize, qrSize);
+    // Draw crisp QR Code with smoothing disabled for razor-sharp modules
+    const qrSize = Math.round(176 * s);
+    const qrY = Math.round(-cardH / 2 + 18 * s);
+    const prevSmooth = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(qrCanvas, Math.round(-qrSize / 2), qrY, qrSize, qrSize);
+    ctx.imageSmoothingEnabled = prevSmooth;
 
     // Animated scanner laser line sweeping smoothly over the QR code
     const scanProgress = (Math.sin(outroTime * 4.2 - Math.PI / 2) + 1) / 2;
