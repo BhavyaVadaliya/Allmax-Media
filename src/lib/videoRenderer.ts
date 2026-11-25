@@ -747,6 +747,7 @@ async function renderVideoMockupClient({
               product,
               outroTubCanvas,
               qrCanvas,
+              promoCodeText: config.promoCodeText,
               outroTime,
               outroDuration,
               width,
@@ -791,6 +792,7 @@ function drawOutroFrame({
   product,
   outroTubCanvas,
   qrCanvas,
+  promoCodeText,
   outroTime,
   outroDuration,
   width,
@@ -801,6 +803,7 @@ function drawOutroFrame({
   product: AllmaxProduct;
   outroTubCanvas: HTMLCanvasElement;
   qrCanvas: HTMLCanvasElement;
+  promoCodeText?: string;
   outroTime: number;
   outroDuration: number;
   width: number;
@@ -901,9 +904,9 @@ function drawOutroFrame({
   // Layout coordinates for Product Tub & QR Card (adapts cleanly for Portrait vs Landscape)
   const centerX = width / 2;
   const tubCenterX = isLandscape ? width * 0.3 : centerX;
-  const tubCenterY = isLandscape ? height * 0.54 : height * 0.34;
-  const qrCenterX = isLandscape ? width * 0.68 : centerX;
-  const qrCenterY = isLandscape ? height * 0.54 : height * 0.69;
+  const tubCenterY = isLandscape ? height * 0.48 : height * 0.31;
+  const qrCenterX = isLandscape ? width * 0.7 : centerX;
+  const qrCenterY = isLandscape ? height * 0.54 : height * 0.72;
 
   // 3. Hero Product Tub with bounce-in & gentle float (0.18s -> 0.68s) using cached GPU blit
   const tubT = easeOutBack((outroTime - 0.18) / 0.5);
@@ -925,22 +928,42 @@ function drawOutroFrame({
     ctx.restore();
   }
 
-  // 4. Product Name & Tagline (0.35s -> 0.80s)
+  // 4. Product Name, Specs, Recovery Headline & Orange Promo Pill (0.35s -> 0.80s)
   const titleT = easeOutCubic((outroTime - 0.35) / 0.45);
   if (titleT > 0) {
     ctx.save();
     ctx.globalAlpha = bgFade * titleT;
-    const titleY = (isLandscape ? height * 0.84 : height * 0.505) + (1 - titleT) * 20 * s;
+    const titleY = (isLandscape ? height * 0.76 : height * 0.46) + (1 - titleT) * 20 * s;
+    const promoFull = promoCodeText || 'ALEX15 • 20% OFF';
+    const promoShort = promoFull.split('•')[0].trim() || 'ALEX15';
+    const specsLine = product.specs.map((sp) => `${sp.value} ${sp.label}`).join('  •  ');
 
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = `900 ${Math.round(34 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.font = `900 ${Math.round(32 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(product.name.toUpperCase(), tubCenterX, titleY);
 
+    ctx.fillStyle = '#E2E8F0';
+    ctx.font = `800 ${Math.round(17 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.fillText(`Fuel Your Recovery • Shop with Code ${promoShort}`, tubCenterX, titleY + 30 * s);
+
     ctx.fillStyle = '#94A3B8';
-    ctx.font = `700 ${Math.round(16 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.fillText(product.tagline, tubCenterX, titleY + 28 * s);
+    ctx.font = `700 ${Math.round(14 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.fillText(specsLine, tubCenterX, titleY + 54 * s);
+
+    // Orange Promo Code Pill
+    const pillText = `CODE: ${promoFull}`;
+    ctx.font = `900 ${Math.round(15 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    const pillW = Math.max(250 * s, ctx.measureText(pillText).width + 36 * s);
+    const pillH = 34 * s;
+    const pillY = titleY + 74 * s;
+    ctx.fillStyle = '#FF4800';
+    roundRect(ctx, tubCenterX - pillW / 2, pillY, pillW, pillH, 17 * s);
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(pillText, tubCenterX, pillY + pillH / 2 + 1 * s);
     ctx.restore();
   }
 

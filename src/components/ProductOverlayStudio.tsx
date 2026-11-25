@@ -17,6 +17,7 @@ import {
 } from '@/types';
 import { ALLMAX_PRODUCTS } from '@/data/allmaxProducts';
 import { renderMockupMedia } from '@/lib/videoRenderer';
+import QRCode from 'qrcode';
 import {
   Play,
   Pause,
@@ -30,6 +31,7 @@ import {
   Check,
   ArrowRight,
   QrCode,
+  Flame,
 } from 'lucide-react';
 
 export interface ProductOverlayStudioRef {
@@ -72,6 +74,17 @@ export const ProductOverlayStudio = forwardRef<
     const [seoTab, setSeoTab] = useState<'instagram' | 'tiktok'>('instagram');
     const [copiedSeo, setCopiedSeo] = useState<boolean>(false);
     const [copiedAlt, setCopiedAlt] = useState<boolean>(false);
+    const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+    useEffect(() => {
+      QRCode.toDataURL(selectedProduct.allmaxUrl || 'https://www.allmaxnutrition.com', {
+        width: 240,
+        margin: 1,
+        color: { dark: '#0A0D16', light: '#FFFFFF' },
+      })
+        .then(setQrDataUrl)
+        .catch(() => {});
+    }, [selectedProduct.allmaxUrl]);
 
     const [isPlaying, setIsPlaying] = useState<boolean>(true);
     const [isMuted, setIsMuted] = useState<boolean>(true);
@@ -329,7 +342,7 @@ export const ProductOverlayStudio = forwardRef<
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                QR End-Card
+                Branded End-Card
               </button>
             </div>
 
@@ -486,38 +499,57 @@ export const ProductOverlayStudio = forwardRef<
                   )}
                 </>
               ) : (
-                /* Branded End-Card Preview */
-                <div className="w-full h-full bg-gradient-to-b from-[#07090F] via-[#0D121F] to-[#05070B] flex flex-col items-center justify-between py-6 px-4 text-center text-white">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-center space-x-1.5">
-                      <span className="w-6 h-6 rounded-full bg-[#FF4800] flex items-center justify-center text-[10px] font-black">
-                        AM
-                      </span>
-                      <span className="text-sm font-black tracking-widest">ALLMAX NUTRITION</span>
-                    </div>
-                    <div className="w-16 h-0.5 bg-[#FF4800] mx-auto rounded-full" />
+                /* Branded End-Card Preview (Product Details + Orange Promo Pill + Scannable QR) */
+                <div className="w-full h-full bg-gradient-to-b from-[#07090F] via-[#0D121F] to-[#05070B] flex flex-col items-center justify-between py-4 px-4 text-center text-white">
+                  {/* Top Allmax Nutrition Brand Header */}
+                  <div className="flex items-center justify-center space-x-1.5">
+                    <Flame className="w-4 h-4 text-[#FF4800] fill-[#FF4800]" />
+                    <span className="text-xs font-black tracking-[0.18em] uppercase">
+                      ALLMAX NUTRITION
+                    </span>
                   </div>
 
+                  {/* Hero Product Tub */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={selectedProduct.svgGraphic}
                     alt={selectedProduct.name}
-                    className="h-28 w-auto object-contain drop-shadow-[0_0_24px_rgba(255,72,0,0.5)]"
+                    className="h-24 w-auto object-contain drop-shadow-[0_0_24px_rgba(255,72,0,0.45)]"
                   />
 
-                  <div className="rounded-2xl bg-white p-3 border-2 border-[#FF4800] text-center shadow-lg">
-                    <QrCode className="w-16 h-16 text-slate-900 mx-auto" />
-                    <span className="text-[10px] font-black text-[#FF4800] block mt-1">
-                      SCAN TO SHOP
-                    </span>
-                    <span className="text-[8px] font-bold text-slate-500 block">
-                      allmaxnutrition.com
-                    </span>
+                  {/* Product Details + Specs + Orange Promo Pill */}
+                  <div className="space-y-1.5 w-full">
+                    <p className="text-xs font-black text-white leading-tight">
+                      Fuel Your Recovery • Shop with Code {promoShort}
+                    </p>
+                    <p className="text-[10px] font-semibold text-slate-400">
+                      {selectedProduct.specs.map((s) => `${s.value} ${s.label}`).join(' • ')}
+                    </p>
+                    <div className="inline-block px-4 py-1.5 rounded-full bg-[#FF4800] text-white text-[11px] font-black tracking-wide shadow-md shadow-orange-500/30">
+                      CODE: {promoCode}
+                    </div>
                   </div>
 
-                  <span className="text-[9px] font-bold tracking-widest text-slate-300 uppercase">
-                    7.0s Animated QR Outro Included
-                  </span>
+                  {/* Scannable QR Code Card */}
+                  <div className="rounded-2xl bg-white p-2 border-2 border-[#FF4800] text-center shadow-lg flex items-center space-x-2.5">
+                    {qrDataUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={qrDataUrl} alt="Product QR Code" className="w-14 h-14 rounded" />
+                    ) : (
+                      <QrCode className="w-14 h-14 text-slate-900" />
+                    )}
+                    <div className="text-left pr-1">
+                      <span className="text-[10px] font-black text-[#FF4800] block leading-tight">
+                        SCAN TO SHOP
+                      </span>
+                      <span className="text-[9px] font-bold text-slate-700 block mt-0.5">
+                        {selectedProduct.shortName}
+                      </span>
+                      <span className="text-[8px] font-medium text-slate-400 block">
+                        allmaxnutrition.com
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
