@@ -81,3 +81,18 @@ export interface CaptionTemplate {
   caption: string;
   hashtags: string[];
 }
+
+export interface CreatorProfile {
+  studioName: string;
+  handle: string;
+  promoCode: string;
+}
+
+export interface PostHistoryItem {
+  id: string;
+  productName: string;
+  mediaType: MediaType;
+  createdAt: string;
+  saves: number;
+  codeUses: number;
+}

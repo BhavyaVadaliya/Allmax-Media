@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Home } from 'lucide-react';
 
 interface NavbarProps {
   currentStep: 1 | 2 | 3;
@@ -8,6 +9,7 @@ interface NavbarProps {
   canNavigateToStep2?: boolean;
   canNavigateToStep3?: boolean;
   onReset?: () => void;
+  onGoHome?: () => void;
   onOpenMobileModal: () => void;
   onNext?: () => void;
   nextLabel?: string;
@@ -16,6 +18,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentStep,
+  onGoHome,
   onOpenMobileModal,
 }) => {
   const getHeaderTitle = () => {
@@ -58,8 +61,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           </span>
         </div>
 
-        {/* Right Action: Clean balanced space across all screens */}
-        <div className="flex items-center justify-end min-w-[80px]" />
+        {/* Right Action: Home Pill Button to return to Creator Home Screen */}
+        <div className="flex items-center justify-end min-w-[80px]">
+          {onGoHome && (
+            <button
+              onClick={onGoHome}
+              className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[11px] font-black text-slate-800 active:scale-95 transition-all"
+              title="Back to Home"
+            >
+              <Home className="w-3 h-3 text-[#FF4800]" />
+              <span>Home</span>
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );
