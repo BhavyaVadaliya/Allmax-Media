@@ -564,7 +564,7 @@ async function renderVideoMockupClient({
     videoElement.duration && !isNaN(videoElement.duration) ? videoElement.duration : 6,
     30
   );
-  const outroDuration = 7.0;
+  const outroDuration = 2.0;
   const totalDuration = videoDuration + outroDuration;
 
   // Enable high-quality canvas smoothing
@@ -861,8 +861,8 @@ function drawOutroFrame({
   const s = Math.min(width, height) / 720;
   const isLandscape = width > height;
 
-  // 1. Cross-fade from last video frame into dark Allmax studio backdrop
-  const bgFade = easeOutCubic(outroTime / 0.35);
+  // 1. Cross-fade from last video frame into dark Allmax studio backdrop (0.0s -> 0.25s)
+  const bgFade = easeOutCubic(outroTime / 0.25);
   if (lastFrameCanvas && bgFade < 1) {
     ctx.drawImage(lastFrameCanvas, 0, 0, width, height);
   }
@@ -907,8 +907,8 @@ function drawOutroFrame({
     ctx.stroke();
   }
 
-  // 2. Top Allmax Brand Header (slides down 0.05s -> 0.50s)
-  const brandT = easeOutCubic((outroTime - 0.05) / 0.45);
+  // 2. Top Allmax Brand Header (slides down 0.05s -> 0.35s)
+  const brandT = easeOutCubic((outroTime - 0.05) / 0.3);
   if (brandT > 0) {
     ctx.save();
     ctx.globalAlpha = bgFade * brandT;
@@ -956,8 +956,8 @@ function drawOutroFrame({
   const qrCenterX = isLandscape ? width * 0.7 : centerX;
   const qrCenterY = isLandscape ? height * 0.54 : height * 0.72;
 
-  // 3. Hero Product Tub with bounce-in & gentle float (0.18s -> 0.68s) using cached GPU blit
-  const tubT = easeOutBack((outroTime - 0.18) / 0.5);
+  // 3. Hero Product Tub with bounce-in & gentle float (0.15s -> 0.55s) using cached GPU blit
+  const tubT = easeOutBack((outroTime - 0.15) / 0.4);
   if (tubT > 0) {
     ctx.save();
     const floatY = Math.sin(outroTime * 3.5) * 6 * s;
@@ -976,8 +976,8 @@ function drawOutroFrame({
     ctx.restore();
   }
 
-  // 4. Product Name, Specs, Recovery Headline & Orange Promo Pill (0.35s -> 0.80s)
-  const titleT = easeOutCubic((outroTime - 0.35) / 0.45);
+  // 4. Product Name, Specs, Recovery Headline & Orange Promo Pill (0.30s -> 0.65s)
+  const titleT = easeOutCubic((outroTime - 0.3) / 0.35);
   if (titleT > 0) {
     ctx.save();
     ctx.globalAlpha = bgFade * titleT;
@@ -1015,8 +1015,8 @@ function drawOutroFrame({
     ctx.restore();
   }
 
-  // 5. Animated QR Code Card (0.50s -> 1.00s)
-  const qrT = easeOutBack((outroTime - 0.5) / 0.5);
+  // 5. Animated QR Code Card (0.45s -> 0.85s)
+  const qrT = easeOutBack((outroTime - 0.45) / 0.4);
   if (qrT > 0) {
     ctx.save();
     ctx.translate(qrCenterX, qrCenterY);
@@ -1075,8 +1075,8 @@ function drawOutroFrame({
     ctx.restore();
   }
 
-  // 6. Bottom Website Pill (0.75s -> end)
-  const footerT = easeOutCubic((outroTime - 0.75) / 0.45);
+  // 6. Bottom Website Pill (0.60s -> 0.95s)
+  const footerT = easeOutCubic((outroTime - 0.6) / 0.35);
   if (footerT > 0 && !isLandscape) {
     ctx.save();
     ctx.globalAlpha = bgFade * footerT;

@@ -514,26 +514,34 @@ export const ProductOverlayStudio = forwardRef<
                   )}
                 </>
               ) : (
-                /* Branded End-Card Preview (Product Details + Orange Promo Pill + Scannable QR) */
-                <div className="w-full h-full bg-gradient-to-b from-[#07090F] via-[#0D121F] to-[#05070B] flex flex-col items-center justify-between py-4 px-4 text-center text-white">
-                  {/* Top Allmax Nutrition Brand Header */}
-                  <div className="flex items-center justify-center space-x-1.5">
+                /* Animated 2-Sec Branded End-Card Preview */
+                <div
+                  key={`endcard-${animKey}`}
+                  className="relative w-full h-full bg-gradient-to-b from-[#07090F] via-[#0D121F] to-[#05070B] flex flex-col items-center justify-between py-4 px-4 text-center text-white overflow-hidden"
+                >
+                  {/* Animated Radial Orange Glow */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-52 h-52 rounded-full bg-[#FF4800]/25 blur-[65px] animate-intro-glow" />
+                  </div>
+
+                  {/* Top Allmax Nutrition Brand Header (Slide-Down) */}
+                  <div className="relative z-10 flex items-center justify-center space-x-1.5 animate-reel-banner">
                     <Flame className="w-4 h-4 text-[#FF4800] fill-[#FF4800]" />
                     <span className="text-xs font-black tracking-[0.18em] uppercase">
                       ALLMAX NUTRITION
                     </span>
                   </div>
 
-                  {/* Hero Product Tub */}
+                  {/* Hero Product Tub (Bounce-In) */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={selectedProduct.svgGraphic}
                     alt={selectedProduct.name}
-                    className="h-24 w-auto object-contain drop-shadow-[0_0_24px_rgba(255,72,0,0.45)]"
+                    className="relative z-10 h-24 w-auto object-contain drop-shadow-[0_0_24px_rgba(255,72,0,0.45)] animate-intro-tub-center"
                   />
 
-                  {/* Product Details + Specs + Orange Promo Pill */}
-                  <div className="space-y-1.5 w-full">
+                  {/* Product Details + Specs + Orange Promo Pill (Slide-Up) */}
+                  <div className="relative z-10 space-y-1.5 w-full animate-intro-slide-up">
                     <p className="text-xs font-black text-white leading-tight">
                       Fuel Your Recovery • Shop with Code {promoShort}
                     </p>
@@ -545,14 +553,16 @@ export const ProductOverlayStudio = forwardRef<
                     </div>
                   </div>
 
-                  {/* Scannable QR Code Card */}
-                  <div className="rounded-2xl bg-white p-2 border-2 border-[#FF4800] text-center shadow-lg flex items-center space-x-2.5">
-                    {qrDataUrl ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={qrDataUrl} alt="Product QR Code" className="w-14 h-14 rounded" />
-                    ) : (
-                      <QrCode className="w-14 h-14 text-slate-900" />
-                    )}
+                  {/* Scannable QR Code Card (Pop-In + Scanner Glow) */}
+                  <div className="relative z-10 rounded-2xl bg-white p-2 border-2 border-[#FF4800] text-center shadow-lg flex items-center space-x-2.5 animate-intro-fade">
+                    <div className="relative">
+                      {qrDataUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={qrDataUrl} alt="Product QR Code" className="w-14 h-14 rounded" />
+                      ) : (
+                        <QrCode className="w-14 h-14 text-slate-900" />
+                      )}
+                    </div>
                     <div className="text-left pr-1">
                       <span className="text-[10px] font-black text-[#FF4800] block leading-tight">
                         SCAN TO SHOP
