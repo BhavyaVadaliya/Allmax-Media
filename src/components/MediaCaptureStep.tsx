@@ -529,6 +529,29 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
                   </div>
                 )}
 
+                {/* Visual Eye-Level & Face Alignment Mark (Guide Only — Not Recorded) */}
+                {showEyeLevelPrompter && (
+                  <div className="pointer-events-none absolute inset-0 z-10">
+                    {/* Horizontal Eye-Level Line */}
+                    <div className="absolute top-[37%] left-3 right-3 flex items-center">
+                      <div className="flex-1 border-t border-dashed border-[#FF4800]/80" />
+                      <span className="mx-2 px-2 py-0.5 rounded-full bg-black/65 border border-[#FF4800]/80 text-[8px] font-black tracking-wider text-[#FF6A2B] uppercase flex items-center gap-1 shadow">
+                        <Eye className="w-2.5 h-2.5 text-[#FF4800]" />
+                        <span>Eye Level</span>
+                      </span>
+                      <div className="flex-1 border-t border-dashed border-[#FF4800]/80" />
+                    </div>
+
+                    {/* Subtle Face Framing Corner Brackets */}
+                    <div className="absolute top-[31%] left-1/2 -translate-x-1/2 w-[48%] h-[28%]">
+                      <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white/70 rounded-tl-xl" />
+                      <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-white/70 rounded-tr-xl" />
+                      <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-white/70 rounded-bl-xl" />
+                      <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white/70 rounded-br-xl" />
+                    </div>
+                  </div>
+                )}
+
                 {/* Recording Timer Pill */}
                 {isRecording && (
                   <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-1.5 bg-red-600/95 px-3 py-1 rounded-full text-xs text-white font-bold shadow-lg">
