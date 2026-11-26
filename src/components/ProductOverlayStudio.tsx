@@ -176,10 +176,11 @@ export const ProductOverlayStudio = forwardRef<
         const deltaX = ((clientX - dragStartRef.current.clientX) / rect.width) * 100;
         const deltaY = ((clientY - dragStartRef.current.clientY) / rect.height) * 100;
 
+        // Keep tub inside IG/TikTok Safe Zones (clear of top OCR banner, right UI bar, and bottom lockup)
         setConfig((prev) => ({
           ...prev,
-          x: Math.max(8, Math.min(92, dragStartRef.current.startX + deltaX)),
-          y: Math.max(12, Math.min(88, dragStartRef.current.startY + deltaY)),
+          x: Math.max(14, Math.min(78, dragStartRef.current.startX + deltaX)),
+          y: Math.max(23, Math.min(79, dragStartRef.current.startY + deltaY)),
         }));
       },
       [isDragging]
@@ -455,16 +456,31 @@ export const ProductOverlayStudio = forwardRef<
                       transform: `translate(-50%, -50%) rotate(${config.rotation}deg)`,
                       width: `${config.scale * 42}%`,
                     }}
-                    className={`absolute z-20 cursor-grab active:cursor-grabbing ${
-                      isDragging ? 'ring-2 ring-[#FF4800] rounded-xl bg-white/10' : 'animate-reel-tub'
+                    className={`group/tub absolute z-20 cursor-grab active:cursor-grabbing ${
+                      isDragging ? 'scale-[1.03]' : 'animate-reel-tub'
                     }`}
                   >
+                    {/* Studio Rim Light Glow Behind Tub */}
+                    {config.hasGlow && (
+                      <div className="pointer-events-none absolute -inset-2 rounded-full bg-[#FF4800]/30 blur-md" />
+                    )}
+
+                    {/* 4 Corner Safe-Zone Framing Brackets (Shown on Drag or Safe Zones ON) */}
+                    {(isDragging || showSafeZones) && (
+                      <div className="pointer-events-none absolute -inset-1.5 z-30">
+                        <span className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-[#FF4800] rounded-tl" />
+                        <span className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 border-[#FF4800] rounded-tr" />
+                        <span className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 border-[#FF4800] rounded-bl" />
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-[#FF4800] rounded-br" />
+                      </div>
+                    )}
+
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={selectedProduct.svgGraphic}
                       alt={selectedProduct.name}
                       draggable={false}
-                      className="w-full h-auto drop-shadow-[0_10px_18px_rgba(0,0,0,0.75)] select-none"
+                      className="relative z-10 w-full h-auto object-contain drop-shadow-[0_12px_20px_rgba(0,0,0,0.8)] select-none"
                     />
                   </div>
 
@@ -606,6 +622,75 @@ export const ProductOverlayStudio = forwardRef<
               </span>
             </div>
           </div>
+
+          {/* 3D Product Compositing Quick Controls (Safe-Zone Snap + Size + Studio Light) */}
+          {previewTab === 'reel' && (
+            <div className="rounded-2xl bg-white border border-slate-200 px-2.5 py-2 shadow-sm flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center space-x-1">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 mr-1">
+                  3D Safe-Zone:
+                </span>
+                {[
+                  { label: 'Bottom-L', x: 16, y: 78 },
+                  { label: 'Mid-L', x: 18, y: 56 },
+                  { label: 'Mid-R', x: 74, y: 56 },
+                ].map((pos) => (
+                  <button
+                    key={pos.label}
+                    onClick={() => setConfig((prev) => ({ ...prev, x: pos.x, y: pos.y }))}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all ${
+                      Math.abs(config.x - pos.x) < 4 && Math.abs(config.y - pos.y) < 4
+                        ? 'bg-[#FF4800] text-white border-[#FF4800]'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {pos.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center space-x-1.5">
+                <button
+                  onClick={() =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      scale: Math.max(0.24, +(prev.scale - 0.04).toFixed(2)),
+                    }))
+                  }
+                  className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black flex items-center justify-center"
+                  title="Decrease Tub Size"
+                >
+                  -
+                </button>
+                <span className="text-[10px] font-mono font-bold text-slate-500 w-8 text-center">
+                  {Math.round(config.scale * 100)}%
+                </span>
+                <button
+                  onClick={() =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      scale: Math.min(0.46, +(prev.scale + 0.04).toFixed(2)),
+                    }))
+                  }
+                  className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black flex items-center justify-center"
+                  title="Increase Tub Size"
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => setConfig((prev) => ({ ...prev, hasGlow: !prev.hasGlow }))}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-black border transition-all ${
+                    config.hasGlow
+                      ? 'bg-orange-50 text-[#FF4800] border-[#FF4800]/50'
+                      : 'bg-slate-50 text-slate-500 border-slate-200'
+                  }`}
+                  title="Toggle Studio Rim Light"
+                >
+                  Studio Lit
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* SEO & Alt Text Card (Matches Image 2!) */}
           <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm space-y-2.5">
