@@ -41,8 +41,8 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="h-full w-full bg-[#080B12] md:bg-[#1E1E1E] text-slate-900 antialiased overflow-hidden md:flex md:items-center md:justify-center md:p-4">
-        {/* Desktop-Only Realistic 9:16 iPhone Simulator Frame (Mobile & Android App stay 100% full-screen) */}
-        <div className="relative h-full w-full md:h-[min(860px,calc(100vh-2rem))] md:aspect-[9/16] md:w-auto md:rounded-[54px] md:p-[3px] md:bg-gradient-to-b md:from-[#8C8794] md:via-[#4A4652] md:to-[#76717D] md:shadow-[0_35px_95px_-15px_rgba(0,0,0,0.9)]">
+        {/* Desktop-Only Realistic iPhone Simulator Frame (Mobile & Android App stay 100% full-screen) */}
+        <div className="relative h-full w-full md:w-[372px] md:h-[min(785px,calc(100vh-2rem))] md:rounded-[52px] md:p-[3px] md:bg-gradient-to-b md:from-[#8C8794] md:via-[#4A4652] md:to-[#76717D] md:shadow-[0_35px_95px_-15px_rgba(0,0,0,0.9)]">
           {/* Decorative Side Hardware Buttons (Desktop Only) */}
           <div className="hidden md:block absolute -left-[3px] top-24 w-[3px] h-7 bg-[#6B6673] rounded-l-sm" />
           <div className="hidden md:block absolute -left-[3px] top-36 w-[3px] h-12 bg-[#6B6673] rounded-l-sm" />
@@ -53,8 +53,8 @@ export default function RootLayout({
           <div className="h-full w-full md:rounded-[51px] md:p-[9px] md:bg-[#050507] md:shadow-inner">
             {/* Inner Screen (transform-gpu keeps fixed modals inside the simulator on desktop) */}
             <div className="relative h-full w-full md:rounded-[42px] md:bg-[#080B12] overflow-hidden flex flex-col md:transform-gpu">
-              {/* Realistic iPhone Orange Status Bar & Dynamic Island (Desktop Only) */}
-              <div className="hidden md:flex shrink-0 items-center justify-between px-6 pt-2.5 pb-2 bg-[#FF4800] text-white text-[12px] font-bold select-none z-40">
+              {/* Realistic iPhone Orange Status Bar & Dynamic Island (Always on top on Desktop) */}
+              <div className="hidden md:flex shrink-0 items-center justify-between px-6 pt-2.5 pb-2 bg-[#FF4800] text-white text-[12px] font-bold select-none relative z-[60]">
                 <span className="tracking-tight w-12">9:41</span>
 
                 {/* Dynamic Island with Realistic Front Camera Lens */}
@@ -87,8 +87,8 @@ export default function RootLayout({
               {/* App Viewport */}
               <div className="flex-1 min-h-0 relative overflow-hidden">{children}</div>
 
-              {/* Simulator Bottom Home Indicator (Desktop Only) */}
-              <div className="hidden md:flex shrink-0 items-center justify-center py-2 bg-[#06080D] z-40">
+              {/* Simulator Bottom Home Indicator (Always on top on Desktop) */}
+              <div className="hidden md:flex shrink-0 items-center justify-center py-2 bg-[#06080D] relative z-[60]">
                 <div className="w-28 h-1 rounded-full bg-white/75" />
               </div>
             </div>
