@@ -18,9 +18,20 @@ export const WorkflowOverviewScreen: React.FC<WorkflowOverviewScreenProps> = ({
   const promoShort = profile.promoCode.split('•')[0].trim() || 'ALEX15';
 
   return (
-    <div className="h-full w-full bg-[#F8FAFC] text-slate-900 flex flex-col overflow-hidden select-none safe-bottom">
+    <div className="relative h-full w-full bg-gradient-to-b from-[#FFF6F1] via-[#F8FAFC] to-[#EEF2F6] text-slate-900 flex flex-col overflow-hidden select-none safe-bottom">
+      {/* Subtle Ambient Background Texture & Brand Glows */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage: 'radial-gradient(#CBD5E1 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      />
+      <div className="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[#FF4800]/12 blur-[85px]" />
+      <div className="pointer-events-none absolute bottom-16 -left-24 w-72 h-72 rounded-full bg-amber-400/12 blur-[90px]" />
+
       {/* Top Header (Matches Home & Studio Light Theme) */}
-      <header className="shrink-0 bg-white border-b border-slate-200 safe-top">
+      <header className="relative z-10 shrink-0 bg-white/90 backdrop-blur-md border-b border-slate-200/80 safe-top">
         <div className="px-4 py-3 flex items-center justify-between max-w-lg w-full mx-auto">
           <div className="flex items-center space-x-2.5">
             <div className="w-9 h-9 rounded-full bg-[#FF4800] flex items-center justify-center shadow-md shadow-orange-500/25">
@@ -50,7 +61,7 @@ export const WorkflowOverviewScreen: React.FC<WorkflowOverviewScreenProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-4 py-5 max-w-lg w-full mx-auto space-y-4">
+      <main className="relative z-10 flex-1 min-h-0 overflow-y-auto scrollbar-none px-4 py-5 max-w-lg w-full mx-auto space-y-4">
         {/* Heading Block */}
         <div className="space-y-1.5">
           <span className="text-[11px] font-black tracking-[0.14em] text-[#FF4800] uppercase block">
@@ -112,14 +123,16 @@ export const WorkflowOverviewScreen: React.FC<WorkflowOverviewScreenProps> = ({
       </main>
 
       {/* Bottom Continue CTA */}
-      <div className="shrink-0 bg-white border-t border-slate-200 p-3.5 sm:p-4 max-w-lg w-full mx-auto">
-        <button
-          onClick={onContinue}
-          className="w-full py-3.5 px-4 rounded-2xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
-        >
-          <span>Continue to Step 1: Create</span>
-          <ArrowRight className="w-4 h-4 stroke-[3]" />
-        </button>
+      <div className="relative z-10 shrink-0 bg-white/90 backdrop-blur-md border-t border-slate-200/80 p-3.5 sm:p-4">
+        <div className="max-w-lg w-full mx-auto">
+          <button
+            onClick={onContinue}
+            className="w-full py-3.5 px-4 rounded-2xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
+          >
+            <span>Continue to Step 1: Create</span>
+            <ArrowRight className="w-4 h-4 stroke-[3]" />
+          </button>
+        </div>
       </div>
     </div>
   );
