@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { HomeScreen } from '@/components/HomeScreen';
 import { PostHistoryScreen } from '@/components/PostHistoryScreen';
-import { WorkflowOverviewScreen } from '@/components/WorkflowOverviewScreen';
 import { MediaCaptureStep } from '@/components/MediaCaptureStep';
 import { ProductOverlayStudio, ProductOverlayStudioRef } from '@/components/ProductOverlayStudio';
 import { ExportPublishStep } from '@/components/ExportPublishStep';
@@ -61,7 +60,7 @@ const DEFAULT_HISTORY: PostHistoryItem[] = [
 
 export default function HomePage() {
   const [showIntro, setShowIntro] = useState<boolean>(true);
-  const [activeView, setActiveView] = useState<'home' | 'history' | 'overview' | 'studio'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'history' | 'studio'>('home');
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
 
@@ -154,7 +153,7 @@ export default function HomePage() {
     setRenderResult(null);
     setIsRendering(false);
     setCurrentStep(1);
-    setActiveView('overview');
+    setActiveView('studio');
   };
 
   const handleHeaderNext = () => {
@@ -196,12 +195,6 @@ export default function HomePage() {
           profile={profile}
           postHistory={postHistory}
           onNewPost={handleStartCreatePost}
-          onGoHome={() => setActiveView('home')}
-        />
-      ) : activeView === 'overview' ? (
-        <WorkflowOverviewScreen
-          profile={profile}
-          onContinue={() => setActiveView('studio')}
           onGoHome={() => setActiveView('home')}
         />
       ) : (
