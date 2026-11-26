@@ -504,51 +504,66 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
 
                 {/* Eye-Level Teleprompter Floating Directly Beside Camera Lens */}
                 {showEyeLevelPrompter && (
-                  <div className="absolute top-2.5 left-2.5 right-2.5 z-20 rounded-2xl bg-black/80 backdrop-blur-md border border-white/20 p-2.5 space-y-1.5 shadow-lg">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-[#FF4800] text-white text-[8px] font-black uppercase tracking-wider">
-                        <Tv className="w-2.5 h-2.5" />
-                        <span>EYE-LEVEL TELEPROMPTER</span>
-                      </span>
-                      <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>Lens Zone</span>
-                      </span>
-                    </div>
+                  <div className="absolute top-2.5 left-2.5 right-2.5 z-20 rounded-2xl bg-black/75 backdrop-blur-md border border-white/15 px-3 py-2.5 shadow-lg">
                     <div
                       ref={prompterScrollRef}
-                      className="max-h-[72px] overflow-y-auto scrollbar-none pr-0.5"
+                      className="max-h-[72px] overflow-y-auto scrollbar-none"
                     >
-                      <p className="text-[11px] text-white leading-relaxed font-semibold">
+                      <p className="text-[11px] text-white leading-relaxed font-semibold text-center">
                         {renderHighlightedScript(activeHook)}
                       </p>
                     </div>
-                    <p className="text-[9px] text-slate-400 leading-tight">
-                      Scrolls compliant scripts directly beside the camera lens for natural eye contact.
-                    </p>
                   </div>
                 )}
 
-                {/* Visual Eye-Level & Face Alignment Mark (Guide Only — Not Recorded) */}
+                {/* Clean Face & Eye Alignment Silhouette Guide (Preview Only — Not Recorded) */}
                 {showEyeLevelPrompter && (
-                  <div className="pointer-events-none absolute inset-0 z-10">
-                    {/* Horizontal Eye-Level Line */}
-                    <div className="absolute top-[37%] left-3 right-3 flex items-center">
-                      <div className="flex-1 border-t border-dashed border-[#FF4800]/80" />
-                      <span className="mx-2 px-2 py-0.5 rounded-full bg-black/65 border border-[#FF4800]/80 text-[8px] font-black tracking-wider text-[#FF6A2B] uppercase flex items-center gap-1 shadow">
-                        <Eye className="w-2.5 h-2.5 text-[#FF4800]" />
-                        <span>Eye Level</span>
-                      </span>
-                      <div className="flex-1 border-t border-dashed border-[#FF4800]/80" />
-                    </div>
-
-                    {/* Subtle Face Framing Corner Brackets */}
-                    <div className="absolute top-[31%] left-1/2 -translate-x-1/2 w-[48%] h-[28%]">
-                      <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white/70 rounded-tl-xl" />
-                      <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-white/70 rounded-tr-xl" />
-                      <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-white/70 rounded-bl-xl" />
-                      <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white/70 rounded-br-xl" />
-                    </div>
+                  <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+                    <svg
+                      viewBox="0 0 200 320"
+                      className="w-[64%] h-auto max-h-[62%] opacity-65 drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]"
+                      fill="none"
+                    >
+                      {/* Face Oval */}
+                      <ellipse
+                        cx="100"
+                        cy="120"
+                        rx="54"
+                        ry="72"
+                        stroke="white"
+                        strokeWidth="1.75"
+                        strokeDasharray="6 5"
+                        strokeOpacity="0.75"
+                      />
+                      {/* Subtle Eye-Level Side Ticks */}
+                      <line
+                        x1="34"
+                        y1="112"
+                        x2="46"
+                        y2="112"
+                        stroke="#FF4800"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <line
+                        x1="154"
+                        y1="112"
+                        x2="166"
+                        y2="112"
+                        stroke="#FF4800"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      {/* Subtle Shoulders Arc */}
+                      <path
+                        d="M28 265 C36 220, 66 205, 100 205 C134 205, 164 220, 172 265"
+                        stroke="white"
+                        strokeWidth="1.5"
+                        strokeDasharray="6 6"
+                        strokeOpacity="0.45"
+                        strokeLinecap="round"
+                      />
+                    </svg>
                   </div>
                 )}
 
