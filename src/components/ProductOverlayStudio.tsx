@@ -141,9 +141,9 @@ export const ProductOverlayStudio = forwardRef<
 
     const [config, setConfig] = useState<OverlayConfig>({
       productId: (initialProduct || ALLMAX_PRODUCTS[0]).id,
-      x: 16,
-      y: 78,
-      scale: 0.34,
+      x: 17,
+      y: 76,
+      scale: 0.50,
       rotation: 0,
       opacity: 1.0,
       hasDropShadow: true,
@@ -500,7 +500,7 @@ export const ProductOverlayStudio = forwardRef<
                       left: `${config.x}%`,
                       top: `${config.y}%`,
                       transform: `translate(-50%, -50%) rotate(${config.rotation}deg)`,
-                      width: `${config.scale * 42}%`,
+                      width: `${config.scale * 45}%`,
                     }}
                     className={`group/tub absolute z-20 cursor-grab active:cursor-grabbing ${
                       isDragging ? 'scale-[1.03]' : 'animate-reel-tub'
@@ -683,7 +683,7 @@ export const ProductOverlayStudio = forwardRef<
                   3D Safe-Zone:
                 </span>
                 {[
-                  { label: 'Bottom-L', x: 16, y: 78 },
+                  { label: 'Bottom-L', x: 17, y: 76 },
                   { label: 'Mid-L', x: 18, y: 56 },
                   { label: 'Mid-R', x: 74, y: 56 },
                 ].map((pos) => (
@@ -706,7 +706,7 @@ export const ProductOverlayStudio = forwardRef<
                   onClick={() =>
                     setConfig((prev) => ({
                       ...prev,
-                      scale: Math.max(0.24, +(prev.scale - 0.04).toFixed(2)),
+                      scale: Math.max(0.34, +(prev.scale - 0.06).toFixed(2)),
                     }))
                   }
                   className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black flex items-center justify-center"
@@ -721,7 +721,7 @@ export const ProductOverlayStudio = forwardRef<
                   onClick={() =>
                     setConfig((prev) => ({
                       ...prev,
-                      scale: Math.min(0.46, +(prev.scale + 0.04).toFixed(2)),
+                      scale: Math.min(0.72, +(prev.scale + 0.06).toFixed(2)),
                     }))
                   }
                   className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black flex items-center justify-center"
