@@ -17,6 +17,7 @@ import {
   X,
   Volume2,
   VolumeX,
+  Share2,
 } from 'lucide-react';
 
 interface ExportPublishStepProps {
@@ -43,6 +44,7 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [showReelPreview, setShowReelPreview] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [sharedBoth, setSharedBoth] = useState<boolean>(false);
   const [previewCurrentTime, setPreviewCurrentTime] = useState<number>(0);
   const [previewDuration, setPreviewDuration] = useState<number>(0);
   const previewVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -135,6 +137,40 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
 
     showToast('TikTok Search Caption copied!');
     window.open('https://www.tiktok.com/upload', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleShareBoth = async () => {
+    try {
+      await navigator.clipboard.writeText(`${igSeoCaption}\n\n${tiktokSearchCaption}`);
+    } catch {
+      // Ignore
+    }
+
+    if (navigator.share && renderResult.blob) {
+      try {
+        const file = new File([renderResult.blob], renderResult.filename, {
+          type: renderResult.blob.type,
+        });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: `Allmax ${product.shortName} Reel`,
+            text: igSeoCaption,
+            files: [file],
+          });
+          setSharedBoth(true);
+          showToast('Shared! Both IG & TikTok captions copied.');
+          return;
+        }
+      } catch {
+        // Fallback to download + open both
+      }
+    }
+
+    handleDownload();
+    window.open('https://www.instagram.com/reels/create/', '_blank', 'noopener,noreferrer');
+    window.open('https://www.tiktok.com/upload', '_blank', 'noopener,noreferrer');
+    setSharedBoth(true);
+    showToast('MP4 downloaded & captions copied! Instagram + TikTok opened.');
   };
 
   return (
@@ -256,6 +292,41 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
           >
             <span>Copy Search Caption • Open TikTok</span>
             <ExternalLink className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+          </button>
+        </div>
+
+        {/* 4. Share with Both Instagram & TikTok */}
+        <div className="rounded-3xl bg-orange-50/60 border-2 border-[#FF4800]/45 p-4 shadow-sm space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <h3 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
+                <Share2 className="w-4 h-4 text-[#FF4800]" />
+                <span>4. Share to Both (IG &amp; TikTok)</span>
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                1-Tap multi-platform launch ({creatorHandle})
+              </p>
+            </div>
+            <span className="px-2 py-0.5 rounded-md bg-white border border-orange-200 text-[9px] font-black text-[#FF4800] uppercase">
+              MULTI-PLATFORM
+            </span>
+          </div>
+
+          <button
+            onClick={handleShareBoth}
+            className="w-full py-3.5 px-4 rounded-2xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center space-x-2"
+          >
+            {sharedBoth ? (
+              <>
+                <Check className="w-4 h-4 stroke-[3]" />
+                <span>Ready on Instagram &amp; TikTok!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="w-4 h-4" />
+                <span>Share with Both TikTok &amp; Instagram</span>
+              </>
+            )}
           </button>
         </div>
 
