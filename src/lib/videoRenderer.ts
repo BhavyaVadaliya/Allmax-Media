@@ -174,7 +174,8 @@ export function drawOverlayElements(
   config: OverlayConfig,
   canvasWidth: number,
   canvasHeight: number,
-  layerFilter: 'all' | 'tub' | 'banner' | 'subtitle' | 'promo' = 'all'
+  layerFilter: 'all' | 'tub' | 'banner' | 'subtitle' | 'promo' = 'all',
+  timeSec: number = 0
 ) {
   if (layerFilter === 'all' || layerFilter === 'tub') {
     ctx.save();
@@ -323,38 +324,69 @@ export function drawOverlayElements(
     ctx.restore();
   }
 
-  // 2. Center Kinetic Subtitle Box
+  // 2. Center Kinetic Subtitle Box (Rolling 5-Word Audio-Synced Phrase)
   if ((layerFilter === 'all' || layerFilter === 'subtitle') && config.kineticSubtitle) {
-    ctx.save();
-    const subW = canvasWidth * 0.86;
-    const subH = Math.round(72 * s);
-    const subX = (canvasWidth - subW) / 2;
-    const subY = Math.round(canvasHeight * 0.45);
+    const words = config.kineticSubtitle.trim().toUpperCase().split(/\s+/).filter(Boolean);
+    if (words.length > 0) {
+      ctx.save();
+      const subW = canvasWidth * 0.86;
+      const subH = Math.round(68 * s);
+      const subX = (canvasWidth - subW) / 2;
+      const subY = Math.round(canvasHeight * 0.45);
 
-    ctx.fillStyle = 'rgba(10, 13, 22, 0.78)';
-    roundRect(ctx, subX, subY, subW, subH, 16 * s);
-    ctx.fill();
+      ctx.fillStyle = 'rgba(10, 13, 22, 0.82)';
+      roundRect(ctx, subX, subY, subW, subH, 16 * s);
+      ctx.fill();
 
-    ctx.strokeStyle = 'rgba(251, 191, 36, 0.65)';
-    ctx.lineWidth = 1.5 * s;
-    roundRect(ctx, subX, subY, subW, subH, 16 * s);
-    ctx.stroke();
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.65)';
+      ctx.lineWidth = 1.5 * s;
+      roundRect(ctx, subX, subY, subW, subH, 16 * s);
+      ctx.stroke();
 
-    ctx.fillStyle = '#FBBF24';
-    ctx.font = `900 ${Math.round(16 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const quote = `"${config.kineticSubtitle.toUpperCase()}"`;
-    if (quote.length > 44) {
-      const mid = quote.lastIndexOf(' ', Math.floor(quote.length / 2));
-      const line1 = quote.slice(0, mid > 0 ? mid : 42);
-      const line2 = quote.slice(mid > 0 ? mid + 1 : 42);
-      ctx.fillText(line1, canvasWidth / 2, subY + 25 * s);
-      ctx.fillText(line2, canvasWidth / 2, subY + 47 * s);
-    } else {
-      ctx.fillText(quote, canvasWidth / 2, subY + subH / 2);
+      const chunkSize = 5;
+      const activeWordIdx = Math.floor(Math.max(0, timeSec) * 2.5) % words.length;
+      const chunkStart = Math.floor(activeWordIdx / chunkSize) * chunkSize;
+      const visibleWords = words.slice(chunkStart, chunkStart + chunkSize);
+      const localActiveIdx = activeWordIdx - chunkStart;
+
+      // Auto-fit font size so 5 words never overflow subW
+      let fontSize = Math.round(20 * s);
+      const maxTextW = subW - 32 * s;
+      const gap = 10 * s;
+      ctx.font = `900 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+      let totalW =
+        visibleWords.reduce((acc, w) => acc + ctx.measureText(w).width, 0) +
+        Math.max(0, visibleWords.length - 1) * gap;
+      while (totalW > maxTextW && fontSize > Math.round(12 * s)) {
+        fontSize -= 1;
+        ctx.font = `900 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+        totalW =
+          visibleWords.reduce((acc, w) => acc + ctx.measureText(w).width, 0) +
+          Math.max(0, visibleWords.length - 1) * gap;
+      }
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      let curX = canvasWidth / 2 - totalW / 2;
+      const centerY = subY + subH / 2;
+
+      visibleWords.forEach((word, idx) => {
+        const wWidth = ctx.measureText(word).width;
+        if (idx === localActiveIdx) {
+          const padX = 7 * s;
+          const pillH = Math.round(fontSize + 10 * s);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+          roundRect(ctx, curX - padX, centerY - pillH / 2, wWidth + padX * 2, pillH, 7 * s);
+          ctx.fill();
+          ctx.fillStyle = '#FF4800';
+        } else {
+          ctx.fillStyle = '#FBBF24';
+        }
+        ctx.fillText(word, curX, centerY + 1 * s);
+        curX += wWidth + gap;
+      });
+      ctx.restore();
     }
-    ctx.restore();
   }
 
   // 3. Bottom ATHLETE PROMO LOCKUP
@@ -586,7 +618,6 @@ async function renderVideoMockupClient({
   };
   const tubCacheCanvas = makeLayerCache('tub');
   const bannerCacheCanvas = makeLayerCache('banner');
-  const subtitleCacheCanvas = makeLayerCache('subtitle');
   const promoCacheCanvas = makeLayerCache('promo');
 
   // Pre-cache the outro hero tub with its ambient glow ONCE
@@ -739,15 +770,25 @@ async function renderVideoMockupClient({
               ctx.restore();
             }
 
-            // 2) Center Kinetic Subtitle pops in (0.30s -> 0.75s)
+            // 2) Center Kinetic Subtitle pops in (0.30s -> 0.75s) with live rolling word sync
             const sT = easeOutBack((elapsedSec - 0.3) / 0.45);
-            if (sT > 0) {
+            if (sT > 0 && config.kineticSubtitle) {
               ctx.save();
               const sc = 0.82 + 0.18 * sT;
               ctx.globalAlpha = Math.min(1, sT * 1.4);
               ctx.translate(width / 2, height * 0.48);
               ctx.scale(sc, sc);
-              ctx.drawImage(subtitleCacheCanvas, -width / 2, -height * 0.48);
+              ctx.translate(-width / 2, -height * 0.48);
+              drawOverlayElements(
+                ctx,
+                productImage,
+                product,
+                config,
+                width,
+                height,
+                'subtitle',
+                elapsedSec
+              );
               ctx.restore();
             }
 
