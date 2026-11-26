@@ -214,13 +214,6 @@ export const ProductOverlayStudio = forwardRef<
     }, [isDragging, handleDragMove, handleDragEnd]);
 
     const handleResetLayout = () => {
-      setConfig((prev) => ({
-        ...prev,
-        x: 16,
-        y: 78,
-        scale: 0.34,
-        rotation: 0,
-      }));
       if (videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play().catch(() => {});
