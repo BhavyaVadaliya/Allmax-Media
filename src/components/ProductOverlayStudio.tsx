@@ -82,6 +82,7 @@ export const ProductOverlayStudio = forwardRef<
     const [qrDataUrl, setQrDataUrl] = useState<string>('');
     const [animKey, setAnimKey] = useState<number>(0);
     const [showDiscount, setShowDiscount] = useState<boolean>(true);
+    const [showSubtitles, setShowSubtitles] = useState<boolean>(true);
     const [selectedPromoCode, setSelectedPromoCode] = useState<string>(promoCode);
 
     const discountOptions = ['10% OFF', '15% OFF', '20% OFF', '25% OFF', 'FREE SHAKER', 'BOGO 50%'];
@@ -108,6 +109,7 @@ export const ProductOverlayStudio = forwardRef<
       media.transcript ||
       selectedHook?.highlightPhrase ||
       selectedProduct.specs.map((s) => `${s.value} ${s.label}`).join(', ');
+    const [subtitleText, setSubtitleText] = useState<string>(kineticLine);
     const promoShort = selectedPromoCode.split('•')[0].trim() || 'ALEX15';
 
     // Default SEO Caption & Alt Text
@@ -161,8 +163,9 @@ export const ProductOverlayStudio = forwardRef<
       setConfig((prev) => ({
         ...prev,
         promoCodeText: showDiscount ? selectedPromoCode : '',
+        kineticSubtitle: showSubtitles ? subtitleText : '',
       }));
-    }, [showDiscount, selectedPromoCode]);
+    }, [showDiscount, selectedPromoCode, showSubtitles, subtitleText]);
 
     const [isDragging, setIsDragging] = useState<boolean>(false);
     const dragStartRef = useRef<{
@@ -444,40 +447,41 @@ export const ProductOverlayStudio = forwardRef<
                     </p>
                   </div>
 
-                  {/* LAYER 2: Center Burned-In Kinetic Subtitles (Frame-Synced Word Highlight) */}
-                  {(() => {
-                    const subtitleWords = (config.kineticSubtitle || kineticLine)
-                      .trim()
-                      .split(/\s+/)
-                      .filter(Boolean);
-                    const activeWordIdx =
-                      subtitleWords.length > 0
-                        ? Math.floor(reelTime * 2.5) % subtitleWords.length
-                        : 0;
-                    return (
-                      <div
-                        key={`sub-${animKey}`}
-                        className="absolute top-[43%] left-3.5 right-3.5 -translate-y-1/2 z-20 rounded-xl bg-black/78 backdrop-blur-sm border border-amber-400/60 px-3 py-2 text-center pointer-events-none shadow-lg animate-reel-subtitle"
-                      >
-                        <p className="text-[11px] sm:text-xs font-black uppercase tracking-wide leading-snug">
-                          &ldquo;
-                          {subtitleWords.map((word, idx) => (
-                            <span
-                              key={`${word}-${idx}`}
-                              className={
-                                idx === activeWordIdx
-                                  ? 'text-[#FF4800] bg-white/95 px-1 py-0.5 rounded mx-0.5 transition-colors'
-                                  : 'text-amber-300 mx-0.5'
-                              }
-                            >
-                              {word}
-                            </span>
-                          ))}
-                          &rdquo;
-                        </p>
-                      </div>
-                    );
-                  })()}
+                  {/* LAYER 2: Center Burned-In Kinetic Subtitles (Scrollable Rolling Phrase Synced to Audio) */}
+                  {showSubtitles &&
+                    (() => {
+                      const subtitleWords = (subtitleText || kineticLine)
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean);
+                      if (subtitleWords.length === 0) return null;
+                      const activeWordIdx = Math.floor(reelTime * 2.5) % subtitleWords.length;
+                      const chunkSize = 5;
+                      const chunkStart = Math.floor(activeWordIdx / chunkSize) * chunkSize;
+                      const visibleWords = subtitleWords.slice(chunkStart, chunkStart + chunkSize);
+                      const localActiveIdx = activeWordIdx - chunkStart;
+                      return (
+                        <div
+                          key={`sub-${animKey}`}
+                          className="absolute top-[43%] left-3.5 right-3.5 -translate-y-1/2 z-20 rounded-xl bg-black/80 backdrop-blur-sm border border-amber-400/60 px-3 py-2 text-center pointer-events-none shadow-lg overflow-hidden animate-reel-subtitle"
+                        >
+                          <p className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[11px] sm:text-xs font-black uppercase tracking-wide leading-snug">
+                            {visibleWords.map((word, idx) => (
+                              <span
+                                key={`${word}-${chunkStart + idx}`}
+                                className={
+                                  idx === localActiveIdx
+                                    ? 'text-[#FF4800] bg-white/95 px-1.5 py-0.5 rounded transition-colors'
+                                    : 'text-amber-300'
+                                }
+                              >
+                                {word}
+                              </span>
+                            ))}
+                          </p>
+                        </div>
+                      );
+                    })()}
 
                   {/* LAYER 3A: Draggable Product Tub (Animated Bounce-Up) */}
                   <div
@@ -882,27 +886,39 @@ export const ProductOverlayStudio = forwardRef<
                     <Captions className="w-2.5 h-2.5 text-[#FF4800]" />
                     <span>Burned-In Kinetic Subtitles</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        kineticSubtitle:
-                          media.transcript || selectedHook?.script || kineticLine,
-                      }))
-                    }
-                    className="text-[8px] font-black text-[#FF4800] hover:underline"
-                  >
-                    Sync Audio
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    {showSubtitles && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSubtitleText(
+                            media.transcript || selectedHook?.script || kineticLine
+                          )
+                        }
+                        className="text-[8px] font-black text-[#FF4800] hover:underline"
+                      >
+                        Sync Audio
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowSubtitles((prev) => !prev)}
+                      className={`px-1.5 py-0.5 rounded text-[8px] font-black border transition-all ${
+                        showSubtitles
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                      }`}
+                    >
+                      {showSubtitles ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
                 </div>
                 <input
                   type="text"
-                  value={config.kineticSubtitle || ''}
-                  onChange={(e) =>
-                    setConfig((prev) => ({ ...prev, kineticSubtitle: e.target.value }))
-                  }
-                  className="w-full rounded-xl bg-[#F8FAFC] border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-[#FF4800]"
+                  disabled={!showSubtitles}
+                  value={subtitleText}
+                  onChange={(e) => setSubtitleText(e.target.value)}
+                  className="w-full rounded-xl bg-[#F8FAFC] border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-[#FF4800] disabled:opacity-45"
                   placeholder="Frame-synced subtitle text"
                 />
               </div>
