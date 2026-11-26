@@ -32,6 +32,9 @@ import {
   ArrowRight,
   QrCode,
   Flame,
+  ShieldCheck,
+  AlertTriangle,
+  Tag,
 } from 'lucide-react';
 
 export interface ProductOverlayStudioRef {
@@ -110,6 +113,11 @@ export const ProductOverlayStudio = forwardRef<
     const [tiktokCaption, setTiktokCaption] = useState<string>(
       `${hookTitle} 🔥 ${selectedProduct.shortName} (${selectedProduct.tagline}) — Use code ${promoShort} for 20% OFF! #Allmax #GymTok #WorkoutFuel`
     );
+
+    const activeCaptionText = seoTab === 'instagram' ? igCaption : tiktokCaption;
+    const restrictedClaimRegex = /\b(cure|cures|treat|treats|prevent|prevents|diagnose|miracle|steroid|steroids)\b/i;
+    const restrictedMatch = activeCaptionText.match(restrictedClaimRegex);
+    const isClaimCompliant = !restrictedMatch;
 
     useEffect(() => {
       const el = captionRef.current;
@@ -684,6 +692,60 @@ export const ProductOverlayStudio = forwardRef<
               </div>
             </div>
           )}
+
+          {/* Promo Lockup & Compliance Card (Discount Code + 2s End-Card + FDA/Health Canada Claims) */}
+          <div className="rounded-2xl bg-white border border-slate-200 p-2.5 shadow-sm space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-wider text-slate-800">
+                <Tag className="w-3.5 h-3.5 text-[#FF4800]" />
+                <span>Promo Lockup &amp; Compliance</span>
+              </span>
+              {isClaimCompliant ? (
+                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] font-black text-emerald-700">
+                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                  <span>FDA / Health Canada Approved</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-[9px] font-black text-amber-800">
+                  <AlertTriangle className="w-3 h-3 text-amber-600" />
+                  <span>Review &ldquo;{restrictedMatch?.[0]}&rdquo; Claim</span>
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+              <div className="rounded-xl bg-[#F8FAFC] border border-slate-200/80 px-2.5 py-1.5">
+                <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 block">
+                  Embedded Discount Code
+                </span>
+                <span className="font-mono font-black text-slate-900 truncate block">
+                  {promoCode}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPreviewTab('endcard')}
+                className="text-left rounded-xl bg-[#F8FAFC] hover:bg-orange-50/70 border border-slate-200/80 hover:border-[#FF4800]/40 px-2.5 py-1.5 transition-colors"
+              >
+                <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 block">
+                  2-Sec Branded End-Card
+                </span>
+                <span className="font-black text-[#FF4800] truncate block">
+                  2.0s QR Outro Active →
+                </span>
+              </button>
+            </div>
+
+            <div className="rounded-xl bg-emerald-50/60 border border-emerald-200/70 px-2.5 py-1.5 text-[10px] text-slate-700 flex items-center justify-between gap-2">
+              <span className="truncate">
+                <strong className="text-emerald-800">Approved Claim:</strong> {selectedProduct.tagline}
+              </span>
+              <span className="shrink-0 text-[9px] font-mono font-bold text-emerald-700">
+                NPN / DSHEA
+              </span>
+            </div>
+          </div>
 
           {/* SEO & Alt Text Card (Matches Image 2!) */}
           <div className="rounded-2xl bg-white border border-slate-200 p-3 shadow-sm space-y-2.5">
