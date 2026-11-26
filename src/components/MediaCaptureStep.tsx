@@ -54,6 +54,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
 
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const [liveTranscript, setLiveTranscript] = useState<string>('');
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
@@ -82,8 +83,19 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
   const recordedChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
+  const liveTranscriptRef = useRef<string>('');
 
   const stopCameraStream = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // Ignore
+      }
+      recognitionRef.current = null;
+    }
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
@@ -170,6 +182,14 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
       };
 
       recorder.onstop = () => {
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.stop();
+          } catch {
+            // Ignore
+          }
+          recognitionRef.current = null;
+        }
         const blob = new Blob(recordedChunksRef.current, { type: mimeType });
         const url = URL.createObjectURL(blob);
         const recordedMedia: MediaItem = {
@@ -180,6 +200,7 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
           blob,
           name: 'Camera_Clip.mp4',
           duration: recordingSeconds,
+          transcript: liveTranscriptRef.current.trim() || undefined,
         };
         onMediaSelected(recordedMedia);
         stopCameraStream();
@@ -188,6 +209,34 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
       recorder.start(100);
       setIsRecording(true);
       setRecordingSeconds(0);
+      setLiveTranscript('');
+      liveTranscriptRef.current = '';
+
+      // Start Web Speech API auto-transcription if supported
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRec) {
+        try {
+          const rec = new SpeechRec();
+          rec.continuous = true;
+          rec.interimResults = true;
+          rec.lang = 'en-US';
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          rec.onresult = (event: any) => {
+            let text = '';
+            for (let i = 0; i < event.results.length; i++) {
+              text += event.results[i][0].transcript + ' ';
+            }
+            const cleaned = text.trim();
+            liveTranscriptRef.current = cleaned;
+            setLiveTranscript(cleaned);
+          };
+          rec.start();
+          recognitionRef.current = rec;
+        } catch {
+          // Fallback silently to hook script
+        }
+      }
 
       timerIntervalRef.current = setInterval(() => {
         setRecordingSeconds((prev) => prev + 1);
@@ -567,11 +616,18 @@ export const MediaCaptureStep: React.FC<MediaCaptureStepProps> = ({
                   </div>
                 )}
 
-                {/* Recording Timer Pill */}
+                {/* Recording Timer + Live Auto-Transcript Pill */}
                 {isRecording && (
-                  <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-1.5 bg-red-600/95 px-3 py-1 rounded-full text-xs text-white font-bold shadow-lg">
-                    <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                    <span>REC 00:{String(recordingSeconds).padStart(2, '0')}</span>
+                  <div className="absolute bottom-24 left-3 right-3 z-20 flex flex-col items-center space-y-1.5">
+                    {liveTranscript && (
+                      <div className="max-w-[90%] px-3 py-1 rounded-xl bg-black/75 backdrop-blur-md border border-amber-400/40 text-[10px] font-bold text-amber-300 text-center line-clamp-2">
+                        &ldquo;{liveTranscript}&rdquo;
+                      </div>
+                    )}
+                    <div className="flex items-center space-x-1.5 bg-red-600/95 px-3 py-1 rounded-full text-xs text-white font-bold shadow-lg">
+                      <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                      <span>REC 00:{String(recordingSeconds).padStart(2, '0')}</span>
+                    </div>
                   </div>
                 )}
 

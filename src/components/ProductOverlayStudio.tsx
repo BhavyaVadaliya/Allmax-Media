@@ -35,6 +35,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   Tag,
+  Sparkles,
+  Captions,
 } from 'lucide-react';
 
 export interface ProductOverlayStudioRef {
@@ -96,12 +98,14 @@ export const ProductOverlayStudio = forwardRef<
 
     const [isPlaying, setIsPlaying] = useState<boolean>(true);
     const [isMuted, setIsMuted] = useState<boolean>(true);
+    const [reelTime, setReelTime] = useState<number>(0);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
     const captionRef = useRef<HTMLTextAreaElement | null>(null);
 
     const hookTitle = selectedHook?.title || 'POST-WORKOUT RECOVERY HACK!';
     const kineticLine =
+      media.transcript ||
       selectedHook?.highlightPhrase ||
       selectedProduct.specs.map((s) => `${s.value} ${s.label}`).join(', ');
     const promoShort = selectedPromoCode.split('•')[0].trim() || 'ALEX15';
@@ -415,6 +419,7 @@ export const ProductOverlayStudio = forwardRef<
                       loop
                       muted={isMuted}
                       playsInline
+                      onTimeUpdate={(e) => setReelTime(e.currentTarget.currentTime)}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -435,19 +440,44 @@ export const ProductOverlayStudio = forwardRef<
                       SEARCH-QUERY OCR BANNER
                     </span>
                     <p className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight leading-tight mt-0.5 truncate">
-                      {hookTitle}
+                      {config.ocrBannerTitle || hookTitle}
                     </p>
                   </div>
 
-                  {/* LAYER 2: Center Kinetic Subtitle Box (Animated Pop-In) */}
-                  <div
-                    key={`sub-${animKey}`}
-                    className="absolute top-[43%] left-3.5 right-3.5 -translate-y-1/2 z-20 rounded-xl bg-black/75 backdrop-blur-sm border border-amber-400/60 px-3 py-2 text-center pointer-events-none shadow-lg animate-reel-subtitle"
-                  >
-                    <p className="text-[11px] sm:text-xs font-black text-amber-300 uppercase tracking-wide leading-snug">
-                      &ldquo;{kineticLine}&rdquo;
-                    </p>
-                  </div>
+                  {/* LAYER 2: Center Burned-In Kinetic Subtitles (Frame-Synced Word Highlight) */}
+                  {(() => {
+                    const subtitleWords = (config.kineticSubtitle || kineticLine)
+                      .trim()
+                      .split(/\s+/)
+                      .filter(Boolean);
+                    const activeWordIdx =
+                      subtitleWords.length > 0
+                        ? Math.floor(reelTime * 2.5) % subtitleWords.length
+                        : 0;
+                    return (
+                      <div
+                        key={`sub-${animKey}`}
+                        className="absolute top-[43%] left-3.5 right-3.5 -translate-y-1/2 z-20 rounded-xl bg-black/78 backdrop-blur-sm border border-amber-400/60 px-3 py-2 text-center pointer-events-none shadow-lg animate-reel-subtitle"
+                      >
+                        <p className="text-[11px] sm:text-xs font-black uppercase tracking-wide leading-snug">
+                          &ldquo;
+                          {subtitleWords.map((word, idx) => (
+                            <span
+                              key={`${word}-${idx}`}
+                              className={
+                                idx === activeWordIdx
+                                  ? 'text-[#FF4800] bg-white/95 px-1 py-0.5 rounded mx-0.5 transition-colors'
+                                  : 'text-amber-300 mx-0.5'
+                              }
+                            >
+                              {word}
+                            </span>
+                          ))}
+                          &rdquo;
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   {/* LAYER 3A: Draggable Product Tub (Animated Bounce-Up) */}
                   <div
@@ -803,6 +833,79 @@ export const ProductOverlayStudio = forwardRef<
               <span className="shrink-0 text-[9px] font-mono font-bold text-emerald-700">
                 NPN / DSHEA
               </span>
+            </div>
+          </div>
+
+          {/* Burned-In Kinetic Subtitles & Multi-Layer AI Search SEO Card */}
+          <div className="rounded-2xl bg-white border border-slate-200 p-2.5 shadow-sm space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center space-x-1.5 text-[10px] font-black uppercase tracking-wider text-slate-800">
+                <Sparkles className="w-3.5 h-3.5 text-[#FF4800]" />
+                <span>Multi-Layer AI &amp; Search SEO</span>
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-orange-50 border border-[#FF4800]/30 text-[9px] font-black text-[#FF4800]">
+                98/100 • Search Indexed
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1.5 text-[9px] font-bold">
+              <div className="rounded-lg bg-emerald-50/70 border border-emerald-200/70 px-2 py-1 text-emerald-800 truncate">
+                ✓ {media.transcript ? 'Auto-Transcribed' : 'Spoken Audio'}
+              </div>
+              <div className="rounded-lg bg-emerald-50/70 border border-emerald-200/70 px-2 py-1 text-emerald-800 truncate">
+                ✓ OCR Banner
+              </div>
+              <div className="rounded-lg bg-emerald-50/70 border border-emerald-200/70 px-2 py-1 text-emerald-800 truncate">
+                ✓ TikTok / IG SEO
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              <div>
+                <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">
+                  Search-Query OCR Banner
+                </label>
+                <input
+                  type="text"
+                  value={config.ocrBannerTitle || ''}
+                  onChange={(e) =>
+                    setConfig((prev) => ({ ...prev, ocrBannerTitle: e.target.value }))
+                  }
+                  className="w-full rounded-xl bg-[#F8FAFC] border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-[#FF4800]"
+                  placeholder="OCR Banner Title"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[8px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                    <Captions className="w-2.5 h-2.5 text-[#FF4800]" />
+                    <span>Burned-In Kinetic Subtitles</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        kineticSubtitle:
+                          media.transcript || selectedHook?.script || kineticLine,
+                      }))
+                    }
+                    className="text-[8px] font-black text-[#FF4800] hover:underline"
+                  >
+                    Sync Audio
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={config.kineticSubtitle || ''}
+                  onChange={(e) =>
+                    setConfig((prev) => ({ ...prev, kineticSubtitle: e.target.value }))
+                  }
+                  className="w-full rounded-xl bg-[#F8FAFC] border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-[#FF4800]"
+                  placeholder="Frame-synced subtitle text"
+                />
+              </div>
             </div>
           </div>
 

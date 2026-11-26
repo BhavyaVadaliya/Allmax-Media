@@ -12,6 +12,7 @@ export interface MediaItem {
   width?: number;
   height?: number;
   fileSize?: string;
+  transcript?: string;
 }
 
 export interface AllmaxProduct {
