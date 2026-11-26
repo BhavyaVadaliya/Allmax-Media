@@ -982,7 +982,7 @@ function drawOutroFrame({
     ctx.save();
     ctx.globalAlpha = bgFade * titleT;
     const titleY = (isLandscape ? height * 0.76 : height * 0.46) + (1 - titleT) * 20 * s;
-    const promoFull = promoCodeText || 'ALEX15 • 20% OFF';
+    const promoFull = promoCodeText === undefined ? 'ALEX15 • 20% OFF' : promoCodeText;
     const promoShort = promoFull.split('•')[0].trim() || 'ALEX15';
     const specsLine = product.specs.map((sp) => `${sp.value} ${sp.label}`).join('  •  ');
 
@@ -994,24 +994,32 @@ function drawOutroFrame({
 
     ctx.fillStyle = '#E2E8F0';
     ctx.font = `800 ${Math.round(17 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.fillText(`Fuel Your Recovery • Shop with Code ${promoShort}`, tubCenterX, titleY + 30 * s);
+    ctx.fillText(
+      promoFull
+        ? `Fuel Your Recovery • Shop with Code ${promoShort}`
+        : 'Fuel Your Recovery • Official Allmax Store',
+      tubCenterX,
+      titleY + 30 * s
+    );
 
     ctx.fillStyle = '#94A3B8';
     ctx.font = `700 ${Math.round(14 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.fillText(specsLine, tubCenterX, titleY + 54 * s);
 
-    // Orange Promo Code Pill
-    const pillText = `CODE: ${promoFull}`;
-    ctx.font = `900 ${Math.round(15 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    const pillW = Math.max(250 * s, ctx.measureText(pillText).width + 36 * s);
-    const pillH = 34 * s;
-    const pillY = titleY + 74 * s;
-    ctx.fillStyle = '#FF4800';
-    roundRect(ctx, tubCenterX - pillW / 2, pillY, pillW, pillH, 17 * s);
-    ctx.fill();
+    // Orange Promo Code Pill (only when discount is enabled)
+    if (promoFull) {
+      const pillText = `CODE: ${promoFull}`;
+      ctx.font = `900 ${Math.round(15 * s)}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+      const pillW = Math.max(250 * s, ctx.measureText(pillText).width + 36 * s);
+      const pillH = 34 * s;
+      const pillY = titleY + 74 * s;
+      ctx.fillStyle = '#FF4800';
+      roundRect(ctx, tubCenterX - pillW / 2, pillY, pillW, pillH, 17 * s);
+      ctx.fill();
 
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(pillText, tubCenterX, pillY + pillH / 2 + 1 * s);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(pillText, tubCenterX, pillY + pillH / 2 + 1 * s);
+    }
     ctx.restore();
   }
 

@@ -79,6 +79,10 @@ export const ProductOverlayStudio = forwardRef<
     const [copiedAlt, setCopiedAlt] = useState<boolean>(false);
     const [qrDataUrl, setQrDataUrl] = useState<string>('');
     const [animKey, setAnimKey] = useState<number>(0);
+    const [showDiscount, setShowDiscount] = useState<boolean>(true);
+    const [selectedPromoCode, setSelectedPromoCode] = useState<string>(promoCode);
+
+    const discountOptions = ['10% OFF', '15% OFF', '20% OFF', '25% OFF', 'FREE SHAKER', 'BOGO 50%'];
 
     useEffect(() => {
       QRCode.toDataURL(selectedProduct.allmaxUrl || 'https://www.allmaxnutrition.com', {
@@ -100,7 +104,7 @@ export const ProductOverlayStudio = forwardRef<
     const kineticLine =
       selectedHook?.highlightPhrase ||
       selectedProduct.specs.map((s) => `${s.value} ${s.label}`).join(', ');
-    const promoShort = promoCode.split('•')[0].trim() || 'ALEX15';
+    const promoShort = selectedPromoCode.split('•')[0].trim() || 'ALEX15';
 
     // Default SEO Caption & Alt Text
     const [igCaption, setIgCaption] = useState<string>(
@@ -145,9 +149,16 @@ export const ProductOverlayStudio = forwardRef<
       showCta: false,
       ocrBannerTitle: hookTitle,
       kineticSubtitle: kineticLine,
-      promoCodeText: promoCode,
+      promoCodeText: showDiscount ? selectedPromoCode : '',
       creatorHandle,
     });
+
+    useEffect(() => {
+      setConfig((prev) => ({
+        ...prev,
+        promoCodeText: showDiscount ? selectedPromoCode : '',
+      }));
+    }, [showDiscount, selectedPromoCode]);
 
     const [isDragging, setIsDragging] = useState<boolean>(false);
     const dragStartRef = useRef<{
@@ -485,26 +496,28 @@ export const ProductOverlayStudio = forwardRef<
                     />
                   </div>
 
-                  {/* LAYER 3B: Bottom ATHLETE PROMO LOCKUP (Animated Slide-In) */}
-                  <div
-                    key={`promo-${animKey}`}
-                    className="absolute bottom-9 left-[32%] right-2.5 z-20 rounded-xl bg-black/85 backdrop-blur-md border border-white/15 px-2.5 py-1.5 pointer-events-none shadow-lg animate-reel-promo"
-                  >
-                    <span className="text-[8px] font-bold tracking-wider text-slate-400 uppercase block">
-                      ATHLETE PROMO LOCKUP
-                    </span>
-                    <p className="text-[11px] font-mono font-black text-white truncate">
-                      CODE: <span className="text-[#FF4800]">{promoCode}</span>
-                    </p>
-                  </div>
+                  {/* LAYER 3B: Bottom ATHLETE PROMO LOCKUP (Animated Slide-In, Optional) */}
+                  {showDiscount && (
+                    <div
+                      key={`promo-${animKey}-${selectedPromoCode}`}
+                      className="absolute bottom-9 left-[32%] right-2.5 z-20 rounded-xl bg-black/85 backdrop-blur-md border border-white/15 px-2.5 py-1.5 pointer-events-none shadow-lg animate-reel-promo"
+                    >
+                      <span className="text-[8px] font-bold tracking-wider text-slate-400 uppercase block">
+                        ATHLETE PROMO LOCKUP
+                      </span>
+                      <p className="text-[11px] font-mono font-black text-white truncate">
+                        CODE: <span className="text-[#FF4800]">{selectedPromoCode}</span>
+                      </p>
+                    </div>
+                  )}
 
                   {/* Bottom Creator Watermark Strip (Animated Fade-Up) */}
                   <div
                     key={`strip-${animKey}`}
                     className="absolute bottom-2 left-3 right-3 z-20 rounded-lg bg-black/65 backdrop-blur-sm px-2.5 py-1 text-[10px] text-white/90 font-semibold truncate pointer-events-none animate-reel-strip"
                   >
-                    <strong className="text-white">{creatorHandle}</strong> {hookTitle} •{' '}
-                    {promoShort}
+                    <strong className="text-white">{creatorHandle}</strong> {hookTitle}
+                    {showDiscount ? ` • ${promoShort}` : ''}
                   </div>
 
                   {/* Safe Zones Overlay */}
@@ -548,14 +561,18 @@ export const ProductOverlayStudio = forwardRef<
                   {/* Product Details + Specs + Orange Promo Pill (Slide-Up) */}
                   <div className="relative z-10 space-y-1.5 w-full animate-intro-slide-up">
                     <p className="text-xs font-black text-white leading-tight">
-                      Fuel Your Recovery • Shop with Code {promoShort}
+                      {showDiscount
+                        ? `Fuel Your Recovery • Shop with Code ${promoShort}`
+                        : 'Fuel Your Recovery • Official Allmax Store'}
                     </p>
                     <p className="text-[10px] font-semibold text-slate-400">
                       {selectedProduct.specs.map((s) => `${s.value} ${s.label}`).join(' • ')}
                     </p>
-                    <div className="inline-block px-4 py-1.5 rounded-full bg-[#FF4800] text-white text-[11px] font-black tracking-wide shadow-md shadow-orange-500/30">
-                      CODE: {promoCode}
-                    </div>
+                    {showDiscount && (
+                      <div className="inline-block px-4 py-1.5 rounded-full bg-[#FF4800] text-white text-[11px] font-black tracking-wide shadow-md shadow-orange-500/30">
+                        CODE: {selectedPromoCode}
+                      </div>
+                    )}
                   </div>
 
                   {/* Scannable QR Code Card (Pop-In + Scanner Glow) */}
@@ -714,13 +731,26 @@ export const ProductOverlayStudio = forwardRef<
             </div>
 
             <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-              <div className="rounded-xl bg-[#F8FAFC] border border-slate-200/80 px-2.5 py-1.5">
-                <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 block">
-                  Embedded Discount Code
-                </span>
-                <span className="font-mono font-black text-slate-900 truncate block">
-                  {promoCode}
-                </span>
+              <div className="rounded-xl bg-[#F8FAFC] border border-slate-200/80 px-2.5 py-1.5 flex items-center justify-between gap-1.5">
+                <div className="min-w-0">
+                  <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 block">
+                    Discount Lockup
+                  </span>
+                  <span className="font-mono font-black text-slate-900 truncate block">
+                    {showDiscount ? selectedPromoCode : 'No Discount'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDiscount((prev) => !prev)}
+                  className={`shrink-0 px-2 py-1 rounded-lg text-[9px] font-black border transition-all ${
+                    showDiscount
+                      ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                      : 'bg-[#FF4800] text-white border-[#FF4800] hover:bg-[#E63E00]'
+                  }`}
+                >
+                  {showDiscount ? 'Remove' : '+ Add'}
+                </button>
               </div>
 
               <button
@@ -736,6 +766,35 @@ export const ProductOverlayStudio = forwardRef<
                 </span>
               </button>
             </div>
+
+            {/* Multiple Available Discount Options */}
+            {showDiscount && (
+              <div className="space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">
+                  Available Discount Options
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {discountOptions.map((opt) => {
+                    const formatted = `${promoShort} • ${opt}`;
+                    const isSelected = selectedPromoCode === formatted;
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setSelectedPromoCode(formatted)}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-black border transition-all ${
+                          isSelected
+                            ? 'bg-[#FF4800] text-white border-[#FF4800] shadow-sm'
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="rounded-xl bg-emerald-50/60 border border-emerald-200/70 px-2.5 py-1.5 text-[10px] text-slate-700 flex items-center justify-between gap-2">
               <span className="truncate">
