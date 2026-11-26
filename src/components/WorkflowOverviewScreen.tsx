@@ -140,21 +140,18 @@ export const WorkflowOverviewScreen: React.FC<WorkflowOverviewScreenProps> = ({
           </p>
         </div>
 
-        {/* 3 Step Interactive Button Cards */}
+        {/* 3 Step Cards (Step 1 is clickable; Steps 2 & 3 have hover styling only) */}
         <div className="space-y-3 pt-1">
           {steps.map((step) => {
             const StepIcon = step.icon;
-            return (
-              <button
-                key={step.num}
-                type="button"
-                onClick={onContinue}
-                className={`group w-full text-left rounded-2xl p-4 transition-all duration-150 active:scale-[0.98] hover:-translate-y-0.5 flex items-center gap-3.5 cursor-pointer ${
-                  step.active
-                    ? 'bg-gradient-to-r from-[#FF4800]/22 via-[#171E30]/95 to-[#121826]/95 border-2 border-[#FF4800] shadow-[0_10px_28px_-8px_rgba(255,72,0,0.45)]'
-                    : 'bg-gradient-to-r from-white/[0.08] to-white/[0.03] hover:from-[#FF4800]/15 hover:to-white/[0.07] border border-white/15 hover:border-[#FF4800]/60 shadow-[0_8px_22px_-8px_rgba(0,0,0,0.65)]'
-                }`}
-              >
+            const cardClass = `group w-full text-left rounded-2xl p-4 transition-all duration-150 hover:-translate-y-0.5 flex items-center gap-3.5 ${
+              step.active
+                ? 'cursor-pointer active:scale-[0.98] bg-gradient-to-r from-[#FF4800]/22 via-[#171E30]/95 to-[#121826]/95 border-2 border-[#FF4800] shadow-[0_10px_28px_-8px_rgba(255,72,0,0.45)]'
+                : 'cursor-default bg-gradient-to-r from-white/[0.08] to-white/[0.03] hover:from-[#FF4800]/15 hover:to-white/[0.07] border border-white/15 hover:border-[#FF4800]/60 shadow-[0_8px_22px_-8px_rgba(0,0,0,0.65)]'
+            }`;
+
+            const cardContent = (
+              <>
                 {/* Left Step Number Pill */}
                 <div
                   className={`w-11 h-11 rounded-xl font-black text-base flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
@@ -196,7 +193,17 @@ export const WorkflowOverviewScreen: React.FC<WorkflowOverviewScreenProps> = ({
                 >
                   <ChevronRight className="w-4 h-4 stroke-[3]" />
                 </div>
+              </>
+            );
+
+            return step.active ? (
+              <button key={step.num} type="button" onClick={onContinue} className={cardClass}>
+                {cardContent}
               </button>
+            ) : (
+              <div key={step.num} className={cardClass}>
+                {cardContent}
+              </div>
             );
           })}
         </div>
