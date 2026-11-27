@@ -159,29 +159,6 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
     setActionModal('share');
   };
 
-  const handleNativeDeviceShare = async () => {
-    if (navigator.share && renderResult.blob) {
-      try {
-        const file = new File([renderResult.blob], renderResult.filename, {
-          type: renderResult.blob.type,
-        });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: `Allmax ${product.shortName} Reel`,
-            text: igSeoCaption,
-            files: [file],
-          });
-          showToast('Shared via device sheet!');
-          return;
-        }
-      } catch {
-        // Fallback to download
-      }
-    }
-    triggerFileDownload();
-    showToast('MP4 saved! Upload directly to Instagram & TikTok.');
-  };
-
   return (
     <div className="h-full flex flex-col bg-[#F8FAFC] overflow-hidden select-none">
       {/* Top 3-Step Pill Bar */}
@@ -356,7 +333,7 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
         </div>
       )}
 
-      {/* Download / Multi-Platform Share Popup Modal */}
+      {/* Download / Dummy Upload Confirmation Popup Modal */}
       {actionModal && (
         <div
           onClick={() => setActionModal(null)}
@@ -364,112 +341,70 @@ export const ExportPublishStep: React.FC<ExportPublishStepProps> = ({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-3xl max-w-xs w-full p-5 space-y-4 shadow-2xl border border-slate-200 text-slate-900"
+            className="bg-white rounded-3xl max-w-xs w-full p-6 space-y-4 shadow-2xl border border-slate-200 text-center text-slate-900"
           >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
-                  {actionModal === 'download' ? (
-                    <Download className="w-5 h-5 text-emerald-600" />
-                  ) : (
-                    <Share2 className="w-5 h-5 text-[#FF4800]" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-slate-900 leading-tight">
-                    {actionModal === 'download'
-                      ? 'Branded MP4 Downloading!'
-                      : 'Share to Instagram & TikTok'}
-                  </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {actionModal === 'download'
-                      ? '720×1280 reel saved to your device'
-                      : 'Captions copied — choose how to post'}
-                  </p>
-                </div>
-              </div>
+            <div className="w-14 h-14 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center mx-auto">
+              <Check className="w-7 h-7 text-emerald-600 stroke-[3]" />
+            </div>
 
-              <button
-                onClick={() => setActionModal(null)}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-slate-900">
+                {actionModal === 'download'
+                  ? 'Reel Downloaded!'
+                  : 'Reel Uploaded Successfully!'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {actionModal === 'download'
+                  ? 'Your branded 720×1280 MP4 reel has been saved.'
+                  : `Your Allmax ${product.shortName} reel is now live on Instagram & TikTok.`}
+              </p>
             </div>
 
             {actionModal === 'download' ? (
-              <div className="space-y-3">
-                <div className="rounded-2xl bg-[#F8FAFC] border border-slate-200 p-3 text-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-500">File</span>
-                    <span className="font-mono font-bold text-slate-800 truncate max-w-[170px]">
-                      {renderResult.filename}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-500">Size</span>
-                    <span className="font-mono font-bold text-slate-800">
-                      {(renderResult.sizeBytes / (1024 * 1024)).toFixed(2)} MB
-                    </span>
-                  </div>
+              <div className="rounded-2xl bg-[#F8FAFC] border border-slate-200 p-3 text-xs space-y-1 text-left">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-500">File</span>
+                  <span className="font-mono font-bold text-slate-800 truncate max-w-[165px]">
+                    {renderResult.filename}
+                  </span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={triggerFileDownload}
-                    className="py-2.5 px-3 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white text-xs font-black active:scale-95 transition-all"
-                  >
-                    Download Again
-                  </button>
-                  <button
-                    onClick={() => setActionModal(null)}
-                    className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold active:scale-95 transition-all"
-                  >
-                    Done
-                  </button>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-500">Size</span>
+                  <span className="font-mono font-bold text-slate-800">
+                    {(renderResult.sizeBytes / (1024 * 1024)).toFixed(2)} MB
+                  </span>
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-[11px] font-bold text-emerald-800 flex items-center space-x-2">
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>IG &amp; TikTok captions copied to clipboard</span>
+              <div className="space-y-2 text-left">
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center justify-between text-xs">
+                  <span className="font-black text-slate-800 flex items-center gap-1.5">
+                    <Instagram className="w-3.5 h-3.5 text-pink-600" />
+                    <span>Instagram Reels</span>
+                  </span>
+                  <span className="text-[10px] font-black text-emerald-700 uppercase">
+                    ✓ Uploaded
+                  </span>
                 </div>
 
-                <button
-                  onClick={handleNativeDeviceShare}
-                  className="w-full py-2.5 px-3 rounded-xl bg-[#FF4800] hover:bg-[#E63E00] text-white text-xs font-black flex items-center justify-center space-x-2 active:scale-95 transition-all"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Share Reel / Save MP4</span>
-                </button>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={handleInstagramPost}
-                    className="py-2.5 px-3 rounded-xl bg-pink-50 hover:bg-pink-100 border border-pink-200 text-pink-700 text-[11px] font-black flex items-center justify-center space-x-1.5 active:scale-95 transition-all"
-                  >
-                    <Instagram className="w-3.5 h-3.5" />
-                    <span>Open Instagram</span>
-                  </button>
-
-                  <button
-                    onClick={handleTikTokPost}
-                    className="py-2.5 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 text-[11px] font-black flex items-center justify-center space-x-1.5 active:scale-95 transition-all"
-                  >
-                    <Smartphone className="w-3.5 h-3.5" />
-                    <span>Open TikTok</span>
-                  </button>
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 flex items-center justify-between text-xs">
+                  <span className="font-black text-slate-800 flex items-center gap-1.5">
+                    <Smartphone className="w-3.5 h-3.5 text-sky-600" />
+                    <span>TikTok</span>
+                  </span>
+                  <span className="text-[10px] font-black text-emerald-700 uppercase">
+                    ✓ Uploaded
+                  </span>
                 </div>
-
-                <button
-                  onClick={() => setActionModal(null)}
-                  className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
-                >
-                  Close
-                </button>
               </div>
             )}
+
+            <button
+              onClick={() => setActionModal(null)}
+              className="w-full py-3 px-4 rounded-2xl bg-[#FF4800] hover:bg-[#E63E00] text-white font-black text-xs uppercase tracking-wider shadow-md shadow-orange-500/25 active:scale-95 transition-all"
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
